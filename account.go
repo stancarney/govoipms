@@ -1,4 +1,4 @@
-package vclient
+package govoipms
 
 import (
 	"net/http"
