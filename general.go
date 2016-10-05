@@ -1,16 +1,15 @@
 package govoipms
 
 import (
-	"net/http"
 	"fmt"
 )
 
-type General struct {
+type GeneralAPI struct {
 	client *Client
 }
 
-func NewGeneral(client *Client) *General {
-	return &General{client}
+func NewGeneralAPI(client *Client) *GeneralAPI {
+	return &GeneralAPI{client}
 }
 
 type GetBalanceResp struct {
@@ -33,7 +32,7 @@ type GetCountriesResp struct {
 	Countries []Country `json:"countries"`
 }
 
-type Country ValueDescription
+type Country StringValueDescription
 
 type GetIPResp struct {
 	BaseResp
@@ -45,7 +44,7 @@ type GetLanguagesResp struct {
 	Languages []Language `json:"languages"`
 }
 
-type Language ValueDescription
+type Language StringValueDescription
 
 type GetServerInfoResp struct {
 	BaseResp
@@ -61,123 +60,73 @@ type Server struct {
 	ServerPop       string `json:"server_pop"`
 }
 
-func (g *General) GetBalance(advanced bool) *Balance {
+func (g *GeneralAPI) GetBalance(advanced bool) (*Balance, error) {
 	url := g.client.BaseUrl("getBalance")
 
 	if advanced {
 		url = fmt.Sprintf("%s&advanced=true", url)
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
+	rs := &GetBalanceResp{}
+	if err := g.client.Get(url, rs); err != nil {
+		return nil, err
 	}
 
-	respStruct := &GetBalanceResp{}
-	_, err = g.client.Call(req, respStruct)
-	if err != nil {
-		panic(err)
-	}
-
-	if respStruct.Status != "success" {
-		panic("Not successful!")
-	}
-
-	return &respStruct.Balance
+	return &rs.Balance, nil
 }
 
-func (g *General) GetCountries(country string) []Country {
+func (g *GeneralAPI) GetCountries(country string) ([]Country, error) {
 	url := g.client.BaseUrl("getCountries")
 
 	if country != "" {
 		url = fmt.Sprintf("%s&country=%s", url, country)
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
+	rs := &GetCountriesResp{}
+	if err := g.client.Get(url, rs); err != nil {
+		return nil, err
 	}
 
-	respStruct := &GetCountriesResp{}
-	_, err = g.client.Call(req, respStruct)
-	if err != nil {
-		panic(err)
-	}
-
-	if respStruct.Status != "success" {
-		panic("Not successful!")
-	}
-
-	return respStruct.Countries
+	return rs.Countries, nil
 }
 
-func (g *General) GetIP() string {
+func (g *GeneralAPI) GetIP() (string, error) {
 	url := g.client.BaseUrl("getIP")
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	respStruct := &GetIPResp{}
-	_, err = g.client.Call(req, respStruct)
-	if err != nil {
-		panic(err)
+	if err := g.client.Get(url, respStruct); err != nil {
+		return "", err
 	}
 
-	if respStruct.Status != "success" {
-		panic("Not successful!")
-	}
-
-	return respStruct.IP
+	return respStruct.IP, nil
 }
 
-func (g *General) GetLanguages(language string) []Language {
+func (g *GeneralAPI) GetLanguages(language string) ([]Language, error) {
 	url := g.client.BaseUrl("getLanguages")
 
 	if language != "" {
 		url = fmt.Sprintf("%s&language=%s", url, language)
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
+	rs := &GetLanguagesResp{}
+	if err := g.client.Get(url, rs); err != nil {
+		return nil, err
 	}
 
-	respStruct := &GetLanguagesResp{}
-	_, err = g.client.Call(req, respStruct)
-	if err != nil {
-		panic(err)
-	}
-
-	if respStruct.Status != "success" {
-		panic("Not successful!")
-	}
-
-	return respStruct.Languages
+	return rs.Languages, nil
 }
 
-func (g *General) GetServerInfo(serverPop string) []Server {
+func (g *GeneralAPI) GetServerInfo(serverPop string) ([]Server, error) {
 	url := g.client.BaseUrl("getServersInfo")
 
 	if serverPop != "" {
 		url = fmt.Sprintf("%s&server_pop=%s", url, serverPop)
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
+	rs := &GetServerInfoResp{}
+	if err := g.client.Get(url, rs); err != nil {
+		return nil, err
 	}
 
-	respStruct := &GetServerInfoResp{}
-	_, err = g.client.Call(req, respStruct)
-	if err != nil {
-		panic(err)
-	}
-
-	if respStruct.Status != "success" {
-		panic("Not successful!")
-	}
-
-	return respStruct.Servers
+	return rs.Servers, nil
 }

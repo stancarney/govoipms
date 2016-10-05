@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"encoding/json"
+	"errors"
 )
 
 type Client struct {
@@ -14,12 +15,25 @@ type Client struct {
 	debug    bool
 }
 
+type StatusResp interface {
+	GetStatus() string
+}
+
 type BaseResp struct {
 	Status string `json:"status"`
 }
 
-type ValueDescription struct {
+func (b *BaseResp) GetStatus() string {
+	return b.Status
+}
+
+type StringValueDescription struct {
 	Value       string `json:"value"`
+	Description string `json:"description"`
+}
+
+type NumberValueDescription struct {
+	Value       json.Number `json:"value"`
 	Description string `json:"description"`
 }
 
@@ -52,6 +66,29 @@ func (c *Client) Call(req *http.Request, respStruct interface{}) (*http.Response
 	}
 
 	return resp, err
+}
+
+func (c *Client) Get(url string, entity interface{}) error {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := c.Call(req, entity)
+	if err != nil {
+		panic(err)
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
+	}
+
+	s, ok := entity.(StatusResp)
+	if ok && s.GetStatus() != "success" {
+		return errors.New(s.GetStatus())
+	}
+
+	return nil
 }
 
 func (c *Client) BaseUrl(apiMethod string) string {
