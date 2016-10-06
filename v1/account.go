@@ -1,4 +1,4 @@
-package govoipms
+package v1
 
 import (
 	"net/http"
@@ -11,10 +11,6 @@ import (
 
 type AccountAPI struct {
 	client *Client
-}
-
-func NewAccountAPI(client *Client) *AccountAPI {
-	return &AccountAPI{client}
 }
 
 type CreateSubAccountResp struct {
@@ -148,7 +144,7 @@ func (a *AccountAPI) CreateSubAccount(subAccount *Account) (*Balance, error) {
 
 	b, err := json.Marshal(subAccount)
 
-	if a.client.debug {
+	if a.client.Debug {
 		log.Println(string(b))
 	}
 

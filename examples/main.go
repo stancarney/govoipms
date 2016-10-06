@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	client := govoipms.NewClient("https://voip.ms/api/v1/rest.php", "stan.voip@moohoffa.com", "PokemonGo1", true)
+	v1 := govoipms.NewV1Client("https://voip.ms/api/v1/rest.php", "stan.voip@moohoffa.com", "PokemonGo1", true)
 	/*
 	general := govoipms.NewGeneralAPI(client)
 	log.Println(general.GetBalance(true))
@@ -16,7 +16,7 @@ func main() {
 	log.Println(general.GetServerInfo(""))
 	*/
 
-	account := govoipms.NewAccountAPI(client)
+	account := v1.NewAccountAPI()
 	//log.Println(account.GetAllowedCodecs(""))
 	//log.Println(account.GetAuthTypes(0))
 	//log.Println(account.GetDeviceTypes(0))
