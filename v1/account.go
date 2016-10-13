@@ -1,4 +1,4 @@
-package govoipms
+package v1
 
 import (
 	"net/http"
@@ -11,10 +11,6 @@ import (
 
 type AccountAPI struct {
 	client *Client
-}
-
-func NewAccountAPI(client *Client) *AccountAPI {
-	return &AccountAPI{client}
 }
 
 type CreateSubAccountResp struct {
@@ -146,8 +142,8 @@ func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 
-	bodyWriter.WriteField("api_username", a.client.username)
-	bodyWriter.WriteField("api_password", a.client.password)
+	bodyWriter.WriteField("api_username", a.client.Username)
+	bodyWriter.WriteField("api_password", a.client.Password)
 	bodyWriter.WriteField("method", "createSubAccount")
 
 	if err := WriteStruct(bodyWriter, subAccount); err != nil {
@@ -157,7 +153,7 @@ func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
-	req, err := http.NewRequest("POST", a.client.url, bodyBuf)
+	req, err := http.NewRequest("POST", a.client.URL, bodyBuf)
 	req.Header.Set("Content-Type", contentType)
 
 	rs := &CreateSubAccountResp{}

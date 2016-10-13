@@ -2,21 +2,14 @@ package main
 
 import (
 	"github.com/stancarney/govoipms"
+	"github.com/stancarney/govoipms/v1"
 	"log"
 )
 
 func main() {
-	client := govoipms.NewClient("https://voip.ms/api/v1/rest.php", "username", "password", true)
-	/*
-	general := govoipms.NewGeneralAPI(client)
-	log.Println(general.GetBalance(true))
-	log.Println(general.GetCountries(""))
-	log.Println(general.GetIP())
-	log.Println(general.GetLanguages(""))
-	log.Println(general.GetServerInfo(""))
-	*/
-
-	a := &govoipms.Account{
+	v1c := govoipms.NewV1Client("https://voip.ms/api/v1/rest.php", "username", "password", true)
+	
+	a := &v1.Account{
 		Username: "Test1",
 		Protocol: "1",
 		Description: "Description",
@@ -40,7 +33,7 @@ func main() {
 		ResellerNextbilling: "0000-00-00",
 	}
 	
-	account := govoipms.NewAccountAPI(client)
+	account := v1c.NewAccountAPI()
 	log.Println(account.CreateSubAccount(a))
 	log.Println(a)
 	
@@ -57,7 +50,7 @@ func main() {
 	//log.Println(account.GetRegistrationStatus("100000_a"))
 	//log.Println(account.GetReportEstimatedHoldTime(""))
 	//log.Println(account.GetRoutes(0))
-	//log.Println(account.GetSubAccounts(a.Account))
+	log.Println(account.GetSubAccounts(a.Account))
 	//log.Println(account.SetSubAccount(""))
 
 /*

@@ -1,4 +1,4 @@
-package govoipms
+package v1
 
 import (
 	"fmt"
@@ -6,10 +6,6 @@ import (
 
 type GeneralAPI struct {
 	client *Client
-}
-
-func NewGeneralAPI(client *Client) *GeneralAPI {
-	return &GeneralAPI{client}
 }
 
 type GetBalanceResp struct {
