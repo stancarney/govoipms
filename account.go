@@ -2,11 +2,11 @@ package govoipms
 
 import (
 	"net/http"
-	"encoding/json"
-	"bytes"
-	"log"
 	"fmt"
 	"errors"
+	"bytes"
+	"mime/multipart"
+	"strconv"
 )
 
 type AccountAPI struct {
@@ -19,37 +19,35 @@ func NewAccountAPI(client *Client) *AccountAPI {
 
 type CreateSubAccountResp struct {
 	BaseResp
-	Output struct {
-		       Id      string `json:"id"`
-		       Account string `json:"account"`
-	       }
+	Id      int `json:"id"`
+	Account string `json:"account"`
 }
 
 type Account struct {
-	Id                  string `json:"id,omitempty"`
-	Account             string `json:"account,omitempty"`
-	Username            string `json:"username"`
-	Protocol            string `json:"protocol"`
-	Description         string `json:"description"`
-	AuthType            string `json:"auth_type"`
-	Password            string `json:"password"`
-	IP                  string `json:"ip"`
-	DeviceType          string `json:"device_type"`
-	CalleridNumber      string `json:"callerid_number"`
-	CanadaRouting       string `json:"canada_routing"`
-	LockInternational   string `json:"lock_international"`
-	InternationalRoute  string `json:"international_route"`
-	MusicOnHold         string `json:"music_on_hold"`
-	AllowedCodecs       string `json:"allowed_codecs"`
-	DTMFMode            string `json:"dtmf_mode"`
-	NAT                 string `json:"nat"`
-	InternalExtension   string `json:"internal_extension"`
-	InternalVoicemail   string `json:"internal_voicemail"`
-	InternalDialtime    string `json:"internal_dialtime"`
-	ResellerClient      string `json:"reseller_client"`
-	ResellerPackage     string `json:"reseller_package"`
-	ResellerNextBilling string `json:"reseller_nextbilling"`
-	ResellerChargesetup string `json:"reseller_chargesetup"`
+	Id                  string `json:"id,omitempty" url:"id"`
+	Account             string `json:"account,omitempty" url:"account"`
+	Username            string `json:"username" url:"username"`
+	Protocol            string `json:"protocol" url:"protocol"`
+	Description         string `json:"description,omitempty" url:"description"`
+	AuthType            string `json:"auth_type" url:"auth_type"`
+	Password            string `json:"password,omitempty" url:"password"`
+	IP                  string `json:"ip,omitempty" url:"ip"`
+	DeviceType          string `json:"device_type" url:"device_type"`
+	CalleridNumber      string `json:"callerid_number,omitempty" url:"callerid_number"`
+	CanadaRouting       string `json:"canada_routing,omitempty" url:"canada_routing"`
+	LockInternational   string `json:"lock_international" url:"lock_international"`
+	InternationalRoute  string `json:"international_route" url:"international_route"`
+	MusicOnHold         string `json:"music_on_hold" url:"music_on_hold"`
+	AllowedCodecs       string `json:"allowed_codecs" url:"allowed_codecs"`
+	DTMFMode            string `json:"dtmf_mode" url:"dtmf_mode"`
+	NAT                 string `json:"nat" url:"nat"`
+	InternalExtension   string `json:"internal_extension,omitempty" url:"internal_extension"`
+	InternalVoicemail   string `json:"internal_voicemail,omitempty" url:"internal_voicemail"`
+	InternalDialtime    string `json:"internal_dialtime,omitempty" url:"internal_dialtime"`
+	ResellerClient      string `json:"reseller_client,omitempty" url:"reseller_client"`
+	ResellerPackage     string `json:"reseller_package,omitempty" url:"reseller_package"`
+	ResellerNextbilling string `json:"reseller_nextbilling,omitempty" url:"reseller_nextbilling"`
+	ResellerChargesetup string `json:"reseller_chargesetup,omitempty" url:"reseller_chargesetup"`
 }
 
 type GetAllowedCodecsResp struct {
@@ -143,31 +141,43 @@ type GetSubAccountsResp struct {
 
 type SetSubAccountsResp BaseResp
 
-func (a *AccountAPI) CreateSubAccount(subAccount *Account) (*Balance, error) {
-	url := a.client.BaseUrl("createSubAccount")
+func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
 
-	b, err := json.Marshal(subAccount)
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
 
-	if a.client.debug {
-		log.Println(string(b))
+	bodyWriter.WriteField("api_username", a.client.username)
+	bodyWriter.WriteField("api_password", a.client.password)
+	bodyWriter.WriteField("method", "createSubAccount")
+
+	if err := WriteStruct(bodyWriter, subAccount); err != nil {
+		return err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	req, err := http.NewRequest("POST", a.client.url, bodyBuf)
+	req.Header.Set("Content-Type", contentType)
+
+	rs := &CreateSubAccountResp{}
+	resp, err := a.client.Call(req, rs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	respStruct := &GetBalanceResp{}
-	_, err = a.client.Call(req, respStruct)
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
 	}
 
-	if respStruct.Status != "success" {
-		return nil, errors.New("Not Succesful!")
+	if rs.GetStatus() != "success" {
+		return errors.New(rs.GetStatus())
 	}
 
-	return &respStruct.Balance, nil
+	subAccount.Id = strconv.Itoa(rs.Id)
+	subAccount.Account = rs.Account
+
+	return nil
 }
 
 func (a *AccountAPI) DelSubAccount(subAccount *Account) *Balance {

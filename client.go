@@ -6,6 +6,10 @@ import (
 	"log"
 	"encoding/json"
 	"errors"
+	"mime/multipart"
+	"reflect"
+	"strings"
+	"net/http/httputil"
 )
 
 type Client struct {
@@ -43,11 +47,11 @@ func NewClient(url, username, password string, debug bool) *Client {
 
 func (c *Client) Call(req *http.Request, respStruct interface{}) (*http.Response, error) {
 
+	//req.Header.Set("Content-Type", "multipart/form-data")
 	if c.debug {
-		log.Println("URL:", req.URL)
+		out, _ := httputil.DumpRequest(req, true)
+		log.Println(string(out))
 	}
-
-	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -62,7 +66,7 @@ func (c *Client) Call(req *http.Request, respStruct interface{}) (*http.Response
 
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(respStruct); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return resp, err
@@ -70,6 +74,7 @@ func (c *Client) Call(req *http.Request, respStruct interface{}) (*http.Response
 
 func (c *Client) Get(url string, entity interface{}) error {
 	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		panic(err)
 	}
@@ -93,4 +98,26 @@ func (c *Client) Get(url string, entity interface{}) error {
 
 func (c *Client) BaseUrl(apiMethod string) string {
 	return fmt.Sprintf("%s?api_username=%s&api_password=%s&method=%s", c.url, c.username, c.password, apiMethod)
+}
+
+func WriteStruct(writer *multipart.Writer, i interface{}) error {
+	val := reflect.Indirect(reflect.ValueOf(i))
+
+	for i := 0; i < val.NumField(); i++ {
+
+		structField := val.Type().Field(i)
+
+		name := strings.TrimSuffix(structField.Tag.Get("json"), ",omitempty") //TODO:Stan the omitempty is rather fragile.
+		if name == "" {
+			name = strings.ToLower(structField.Name)
+		}
+
+		value := val.Field(i).Interface().(string)
+
+		if err := writer.WriteField(name, value); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

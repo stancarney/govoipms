@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	client := govoipms.NewClient("https://voip.ms/api/v1/rest.php", "stan.voip@moohoffa.com", "PokemonGo1", true)
+	client := govoipms.NewClient("https://voip.ms/api/v1/rest.php", "username", "password", true)
 	/*
 	general := govoipms.NewGeneralAPI(client)
 	log.Println(general.GetBalance(true))
@@ -16,7 +16,34 @@ func main() {
 	log.Println(general.GetServerInfo(""))
 	*/
 
+	a := &govoipms.Account{
+		Username: "Test1",
+		Protocol: "1",
+		Description: "Description",
+		AuthType: "1",
+		Password: "Password1",
+		IP: "",
+		DeviceType: "2",
+		CalleridNumber: "5555551234",
+		CanadaRouting: "1",
+		LockInternational: "1",
+		InternationalRoute: "1",
+		MusicOnHold: "default",
+		AllowedCodecs: "ulaw;g729",
+		DTMFMode: "auto",
+		NAT: "yes",
+		InternalExtension: "",
+		InternalVoicemail: "",
+		InternalDialtime: "20",
+		ResellerClient: "0",
+		ResellerPackage: "0",
+		ResellerNextbilling: "0000-00-00",
+	}
+	
 	account := govoipms.NewAccountAPI(client)
+	log.Println(account.CreateSubAccount(a))
+	log.Println(a)
+	
 	//log.Println(account.GetAllowedCodecs(""))
 	//log.Println(account.GetAuthTypes(0))
 	//log.Println(account.GetDeviceTypes(0))
@@ -30,7 +57,8 @@ func main() {
 	//log.Println(account.GetRegistrationStatus("100000_a"))
 	//log.Println(account.GetReportEstimatedHoldTime(""))
 	//log.Println(account.GetRoutes(0))
-	log.Println(account.GetSubAccounts(""))
+	//log.Println(account.GetSubAccounts(a.Account))
+	//log.Println(account.SetSubAccount(""))
 
 /*
 	sub := &govoipms.SubAccount{
