@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"net/http/httputil"
+	"bytes"
 )
 
 type Client struct {
@@ -93,6 +94,41 @@ func (c *Client) Get(url string, entity interface{}) error {
 		return errors.New(s.GetStatus())
 	}
 
+	return nil
+}
+
+func (c *Client) Post(method string, entity interface{}, respStruct interface{}) error {
+	
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+
+	bodyWriter.WriteField("api_username", c.Username)
+	bodyWriter.WriteField("api_password", c.Password)
+	bodyWriter.WriteField("method", method)
+
+	if err := WriteStruct(bodyWriter, entity); err != nil {
+		return err
+	}
+
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	req, err := http.NewRequest("POST", c.URL, bodyBuf)
+	req.Header.Set("Content-Type", contentType)
+	resp, err := c.Call(req, respStruct)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
+	}
+
+	s, ok := respStruct.(StatusResp)
+	if ok && s.GetStatus() != "success" {
+		return errors.New(s.GetStatus())
+	}
+	
 	return nil
 }
 

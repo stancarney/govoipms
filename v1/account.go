@@ -1,11 +1,8 @@
 package v1
 
 import (
-	"net/http"
 	"fmt"
 	"errors"
-	"bytes"
-	"mime/multipart"
 	"strconv"
 )
 
@@ -17,6 +14,14 @@ type CreateSubAccountResp struct {
 	BaseResp
 	Id      int `json:"id"`
 	Account string `json:"account"`
+}
+
+type DelSubAccountResp struct {
+	BaseResp
+}
+
+type DelSubAccountReq struct {
+	Id      string `json:"id"`
 }
 
 type Account struct {
@@ -135,39 +140,15 @@ type GetSubAccountsResp struct {
 	Accounts []Account `json:"accounts"`
 }
 
-type SetSubAccountsResp BaseResp
+type SetSubAccountResp struct {
+	BaseResp	
+}
 
 func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
 
-	bodyBuf := &bytes.Buffer{}
-	bodyWriter := multipart.NewWriter(bodyBuf)
-
-	bodyWriter.WriteField("api_username", a.client.Username)
-	bodyWriter.WriteField("api_password", a.client.Password)
-	bodyWriter.WriteField("method", "createSubAccount")
-
-	if err := WriteStruct(bodyWriter, subAccount); err != nil {
-		return err
-	}
-
-	contentType := bodyWriter.FormDataContentType()
-	bodyWriter.Close()
-
-	req, err := http.NewRequest("POST", a.client.URL, bodyBuf)
-	req.Header.Set("Content-Type", contentType)
-
 	rs := &CreateSubAccountResp{}
-	resp, err := a.client.Call(req, rs)
-	if err != nil {
+	if err := a.client.Post("createSubAccount", subAccount, rs); err != nil {
 		return err
-	}
-
-	if resp.StatusCode != 200 {
-		return errors.New(resp.Status)
-	}
-
-	if rs.GetStatus() != "success" {
-		return errors.New(rs.GetStatus())
 	}
 
 	subAccount.Id = strconv.Itoa(rs.Id)
@@ -176,8 +157,14 @@ func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
 	return nil
 }
 
-func (a *AccountAPI) DelSubAccount(subAccount *Account) *Balance {
-	panic("NOT IMPLEMENTED YET!")
+func (a *AccountAPI) DelSubAccount(id string) error {
+	rq := &DelSubAccountReq{id}
+	rs := &DelSubAccountResp{}
+	if err := a.client.Post("delSubAccount", rq, rs); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *AccountAPI) GetAllowedCodecs(codec string) ([]Codec, error) {
@@ -365,10 +352,8 @@ func (a *AccountAPI) GetSubAccounts(account string) ([]Account, error) {
 }
 
 func (a *AccountAPI) SetSubAccount(account *Account) error {
-	url := a.client.BaseUrl("setSubAccount")
-
-	rs := &SetSubAccountsResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	rs := &SetSubAccountResp{}
+	if err := a.client.Post("setSubAccount", account, rs); err != nil {
 		return err
 	}
 

@@ -36,6 +36,12 @@ func main() {
 	account := v1c.NewAccountAPI()
 	log.Println(account.CreateSubAccount(a))
 	log.Println(a)
+
+	a.Description = "New Description."
+	log.Println(account.SetSubAccount(a))
+	log.Println(a)
+
+	log.Println(account.DelSubAccount(a.Id))
 	
 	//log.Println(account.GetAllowedCodecs(""))
 	//log.Println(account.GetAuthTypes(0))
@@ -50,7 +56,7 @@ func main() {
 	//log.Println(account.GetRegistrationStatus("100000_a"))
 	//log.Println(account.GetReportEstimatedHoldTime(""))
 	//log.Println(account.GetRoutes(0))
-	log.Println(account.GetSubAccounts(a.Account))
+	//log.Println(account.GetSubAccounts(a.Account))
 	//log.Println(account.SetSubAccount(""))
 
 /*
