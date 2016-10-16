@@ -6,8 +6,8 @@ import (
 	"strconv"
 )
 
-type AccountAPI struct {
-	client *Client
+type AccountsAPI struct {
+	client *VOIPClient
 }
 
 type CreateSubAccountResp struct {
@@ -144,7 +144,7 @@ type SetSubAccountResp struct {
 	BaseResp	
 }
 
-func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
+func (a *AccountsAPI) CreateSubAccount(subAccount *Account) error {
 
 	rs := &CreateSubAccountResp{}
 	if err := a.client.Post("createSubAccount", subAccount, rs); err != nil {
@@ -157,7 +157,7 @@ func (a *AccountAPI) CreateSubAccount(subAccount *Account) error {
 	return nil
 }
 
-func (a *AccountAPI) DelSubAccount(id string) error {
+func (a *AccountsAPI) DelSubAccount(id string) error {
 	rq := &DelSubAccountReq{id}
 	rs := &DelSubAccountResp{}
 	if err := a.client.Post("delSubAccount", rq, rs); err != nil {
@@ -167,7 +167,7 @@ func (a *AccountAPI) DelSubAccount(id string) error {
 	return nil
 }
 
-func (a *AccountAPI) GetAllowedCodecs(codec string) ([]Codec, error) {
+func (a *AccountsAPI) GetAllowedCodecs(codec string) ([]Codec, error) {
 	url := a.client.BaseUrl("getAllowedCodecs")
 
 	if codec != "" {
@@ -182,7 +182,7 @@ func (a *AccountAPI) GetAllowedCodecs(codec string) ([]Codec, error) {
 	return rs.AllowedCodecs, nil
 }
 
-func (a *AccountAPI) GetAuthTypes(authType int) ([]AuthType, error) {
+func (a *AccountsAPI) GetAuthTypes(authType int) ([]AuthType, error) {
 	url := a.client.BaseUrl("getAuthTypes")
 
 	if authType > 0 {
@@ -197,7 +197,7 @@ func (a *AccountAPI) GetAuthTypes(authType int) ([]AuthType, error) {
 	return rs.AuthTypes, nil
 }
 
-func (a *AccountAPI) GetDeviceTypes(deviceType int) ([]DeviceType, error) {
+func (a *AccountsAPI) GetDeviceTypes(deviceType int) ([]DeviceType, error) {
 	url := a.client.BaseUrl("getDeviceTypes")
 
 	if deviceType > 0 {
@@ -212,7 +212,7 @@ func (a *AccountAPI) GetDeviceTypes(deviceType int) ([]DeviceType, error) {
 	return rs.DeviceTypes, nil
 }
 
-func (a *AccountAPI) GetDTMFModes(DTMFMode string) ([]DTMFMode, error) {
+func (a *AccountsAPI) GetDTMFModes(DTMFMode string) ([]DTMFMode, error) {
 	url := a.client.BaseUrl("getDTMFModes")
 
 	if DTMFMode != "" {
@@ -229,7 +229,7 @@ func (a *AccountAPI) GetDTMFModes(DTMFMode string) ([]DTMFMode, error) {
 
 //0 is an actual value for a Lock International entity so the signature of this message is a string opposed to an int.
 //This was done to avoid confusion with other functions that take 0 in order to return all values.
-func (a *AccountAPI) GetLockInternational(lockInternational string) ([]LockInternational, error) {
+func (a *AccountsAPI) GetLockInternational(lockInternational string) ([]LockInternational, error) {
 	url := a.client.BaseUrl("getLockInternational")
 
 	if lockInternational != "" {
@@ -244,7 +244,7 @@ func (a *AccountAPI) GetLockInternational(lockInternational string) ([]LockInter
 	return rs.LockInternational, nil
 }
 
-func (a *AccountAPI) GetMusicOnHold(musicOnHold string) ([]MusicOnHold, error) {
+func (a *AccountsAPI) GetMusicOnHold(musicOnHold string) ([]MusicOnHold, error) {
 	url := a.client.BaseUrl("getMusicOnHold")
 
 	if musicOnHold != "" {
@@ -259,7 +259,7 @@ func (a *AccountAPI) GetMusicOnHold(musicOnHold string) ([]MusicOnHold, error) {
 	return rs.MusicOnHold, nil
 }
 
-func (a *AccountAPI) GetNAT(NAT string) ([]NAT, error) {
+func (a *AccountsAPI) GetNAT(NAT string) ([]NAT, error) {
 	url := a.client.BaseUrl("getNAT")
 
 	if NAT != "" {
@@ -274,7 +274,7 @@ func (a *AccountAPI) GetNAT(NAT string) ([]NAT, error) {
 	return rs.NAT, nil
 }
 
-func (a *AccountAPI) GetProtocols(protocol int) ([]Protocol, error) {
+func (a *AccountsAPI) GetProtocols(protocol int) ([]Protocol, error) {
 	url := a.client.BaseUrl("getProtocols")
 
 	if protocol > 0 {
@@ -289,7 +289,7 @@ func (a *AccountAPI) GetProtocols(protocol int) ([]Protocol, error) {
 	return rs.Protocols, nil
 }
 
-func (a *AccountAPI) GetRegistrationStatus(account string) (bool, []RegistrationStatus, error) {
+func (a *AccountsAPI) GetRegistrationStatus(account string) (bool, []RegistrationStatus, error) {
 	url := a.client.BaseUrl("getRegistrationStatus")
 
 	if account == "" {
@@ -306,7 +306,7 @@ func (a *AccountAPI) GetRegistrationStatus(account string) (bool, []Registration
 	return rs.Registered == "yes", rs.Registrations, nil
 }
 
-func (a *AccountAPI) GetReportEstimatedHoldTime(typ3 string) ([]EstimatedHoldTime, error) {
+func (a *AccountsAPI) GetReportEstimatedHoldTime(typ3 string) ([]EstimatedHoldTime, error) {
 	url := a.client.BaseUrl("getReportEstimatedHoldTime")
 
 	if typ3 != "" {
@@ -321,7 +321,7 @@ func (a *AccountAPI) GetReportEstimatedHoldTime(typ3 string) ([]EstimatedHoldTim
 	return rs.Types, nil
 }
 
-func (a *AccountAPI) GetRoutes(route int) ([]Route, error) {
+func (a *AccountsAPI) GetRoutes(route int) ([]Route, error) {
 	url := a.client.BaseUrl("getRoutes")
 
 	if route > 0 {
@@ -336,7 +336,7 @@ func (a *AccountAPI) GetRoutes(route int) ([]Route, error) {
 	return rs.Routes, nil
 }
 
-func (a *AccountAPI) GetSubAccounts(account string) ([]Account, error) {
+func (a *AccountsAPI) GetSubAccounts(account string) ([]Account, error) {
 	url := a.client.BaseUrl("getSubAccounts")
 
 	if account != "" {
@@ -351,7 +351,7 @@ func (a *AccountAPI) GetSubAccounts(account string) ([]Account, error) {
 	return rs.Accounts, nil
 }
 
-func (a *AccountAPI) SetSubAccount(account *Account) error {
+func (a *AccountsAPI) SetSubAccount(account *Account) error {
 	rs := &SetSubAccountResp{}
 	if err := a.client.Post("setSubAccount", account, rs); err != nil {
 		return err

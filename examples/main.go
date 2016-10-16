@@ -33,31 +33,31 @@ func main() {
 		ResellerNextbilling: "0000-00-00",
 	}
 	
-	account := v1c.NewAccountAPI()
-	log.Println(account.CreateSubAccount(a))
+	accounts := v1c.NewAccountsAPI()
+	log.Println(accounts.CreateSubAccount(a))
 	log.Println(a)
 
 	a.Description = "New Description."
-	log.Println(account.SetSubAccount(a))
+	log.Println(accounts.SetSubAccount(a))
 	log.Println(a)
 
-	log.Println(account.DelSubAccount(a.Id))
+	log.Println(accounts.DelSubAccount(a.Id))
 	
-	//log.Println(account.GetAllowedCodecs(""))
-	//log.Println(account.GetAuthTypes(0))
-	//log.Println(account.GetDeviceTypes(0))
-	//log.Println(account.GetDTMFModes(""))
-	//log.Println(account.GetDTMFModes(""))
-	//log.Println(account.GetLockInternational(""))
-	//log.Println(account.GetMusicOnHold(""))
-	//log.Println(account.GetMusicOnHold(""))
-	//log.Println(account.GetNAT(""))
-	//log.Println(account.GetProtocols(0))
-	//log.Println(account.GetRegistrationStatus("100000_a"))
-	//log.Println(account.GetReportEstimatedHoldTime(""))
-	//log.Println(account.GetRoutes(0))
-	//log.Println(account.GetSubAccounts(a.Account))
-	//log.Println(account.SetSubAccount(""))
+	//log.Println(accounts.GetAllowedCodecs(""))
+	//log.Println(accounts.GetAuthTypes(0))
+	//log.Println(accounts.GetDeviceTypes(0))
+	//log.Println(accounts.GetDTMFModes(""))
+	//log.Println(accounts.GetDTMFModes(""))
+	//log.Println(accounts.GetLockInternational(""))
+	//log.Println(accounts.GetMusicOnHold(""))
+	//log.Println(accounts.GetMusicOnHold(""))
+	//log.Println(accounts.GetNAT(""))
+	//log.Println(accounts.GetProtocols(0))
+	//log.Println(accounts.GetRegistrationStatus("100000_a"))
+	//log.Println(accounts.GetReportEstimatedHoldTime(""))
+	//log.Println(accounts.GetRoutes(0))
+	//log.Println(accounts.GetSubAccounts(a.Account))
+	//log.Println(accounts.SetSubAccount(""))
 
 /*
 	sub := &govoipms.SubAccount{

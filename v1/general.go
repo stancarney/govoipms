@@ -5,7 +5,7 @@ import (
 )
 
 type GeneralAPI struct {
-	client *Client
+	client *VOIPClient
 }
 
 type GetBalanceResp struct {

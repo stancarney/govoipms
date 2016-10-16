@@ -4,6 +4,6 @@ import (
 	"github.com/stancarney/govoipms/v1"
 )
 
-func NewV1Client(url, username, password string, debug bool) *v1.Client {
-	return &v1.Client{url, username, password, debug}
+func NewV1Client(url, username, password string, debug bool) *v1.VOIPClient {
+	return &v1.VOIPClient{url, username, password, debug}
 }

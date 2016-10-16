@@ -13,7 +13,7 @@ import (
 	"bytes"
 )
 
-type Client struct {
+type VOIPClient struct {
 	URL      string
 	Username string
 	Password string
@@ -42,11 +42,11 @@ type NumberValueDescription struct {
 	Description string `json:"description"`
 }
 
-func NewClient(url, username, password string, debug bool) *Client {
-	return &Client{url, username, password, debug}
+func NewVOIPClient(url, username, password string, debug bool) *VOIPClient {
+	return &VOIPClient{url, username, password, debug}
 }
 
-func (c *Client) Call(req *http.Request, respStruct interface{}) (*http.Response, error) {
+func (c *VOIPClient) Call(req *http.Request, respStruct interface{}) (*http.Response, error) {
 
 	//req.Header.Set("Content-Type", "multipart/form-data")
 	if c.Debug {
@@ -73,7 +73,7 @@ func (c *Client) Call(req *http.Request, respStruct interface{}) (*http.Response
 	return resp, err
 }
 
-func (c *Client) Get(url string, entity interface{}) error {
+func (c *VOIPClient) Get(url string, entity interface{}) error {
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *Client) Get(url string, entity interface{}) error {
 	return nil
 }
 
-func (c *Client) Post(method string, entity interface{}, respStruct interface{}) error {
+func (c *VOIPClient) Post(method string, entity interface{}, respStruct interface{}) error {
 	
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
@@ -132,16 +132,16 @@ func (c *Client) Post(method string, entity interface{}, respStruct interface{})
 	return nil
 }
 
-func (c *Client) BaseUrl(apiMethod string) string {
+func (c *VOIPClient) BaseUrl(apiMethod string) string {
 	return fmt.Sprintf("%s?api_username=%s&api_password=%s&method=%s", c.URL, c.Username, c.Password, apiMethod)
 }
 
-func (c *Client) NewGeneralAPI() *GeneralAPI {
+func (c *VOIPClient) NewGeneralAPI() *GeneralAPI {
 	return &GeneralAPI{c}
 }
 
-func (c *Client) NewAccountAPI() *AccountAPI {
-	return &AccountAPI{c}
+func (c *VOIPClient) NewAccountsAPI() *AccountsAPI {
+	return &AccountsAPI{c}
 }
 
 func WriteStruct(writer *multipart.Writer, i interface{}) error {
