@@ -56,6 +56,9 @@ func (c *VOIPClient) Call(req *http.Request, respStruct interface{}) (*http.Resp
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+	if err != nil {
+		return resp, err
+	}
 	defer resp.Body.Close()
 
 	if c.Debug {
