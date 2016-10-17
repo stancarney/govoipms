@@ -85,7 +85,7 @@ func (c *VOIPClient) Get(url string, entity interface{}) error {
 
 	resp, err := c.Call(req, entity)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if resp.StatusCode != 200 {
