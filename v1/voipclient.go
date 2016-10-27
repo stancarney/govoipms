@@ -2,7 +2,6 @@ package v1
 
 import (
 	"net/http"
-	"fmt"
 	"log"
 	"encoding/json"
 	"errors"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"net/http/httputil"
 	"bytes"
+	"net/url"
 )
 
 type VOIPClient struct {
@@ -76,8 +76,20 @@ func (c *VOIPClient) Call(req *http.Request, respStruct interface{}) (*http.Resp
 	return resp, err
 }
 
-func (c *VOIPClient) Get(url string, entity interface{}) error {
-	req, err := http.NewRequest("GET", url, nil)
+func (c *VOIPClient) Get(method string, values url.Values, entity interface{}) error {
+	
+	u, err := url.Parse(c.URL)
+	if err != nil {
+		return err
+	}
+	
+	values.Add("api_username", c.Username)
+	values.Add("api_password", c.Password)
+	values.Add("method", method)
+	
+	u.RawQuery = values.Encode()
+	
+	req, err := http.NewRequest("GET", u.String(), nil)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		panic(err)
@@ -133,10 +145,6 @@ func (c *VOIPClient) Post(method string, entity interface{}, respStruct interfac
 	}
 	
 	return nil
-}
-
-func (c *VOIPClient) BaseUrl(apiMethod string) string {
-	return fmt.Sprintf("%s?api_username=%s&api_password=%s&method=%s", c.URL, c.Username, c.Password, apiMethod)
 }
 
 func (c *VOIPClient) NewGeneralAPI() *GeneralAPI {

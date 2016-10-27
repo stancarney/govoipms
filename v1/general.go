@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"fmt"
+	"net/url"
 )
 
 type GeneralAPI struct {
@@ -57,14 +57,14 @@ type Server struct {
 }
 
 func (g *GeneralAPI) GetBalance(advanced bool) (*Balance, error) {
-	url := g.client.BaseUrl("getBalance")
 
+	values := url.Values{}
 	if advanced {
-		url = fmt.Sprintf("%s&advanced=true", url)
+		values.Add("advanced", "true")
 	}
 
 	rs := &GetBalanceResp{}
-	if err := g.client.Get(url, rs); err != nil {
+	if err := g.client.Get("getBalance", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -72,14 +72,13 @@ func (g *GeneralAPI) GetBalance(advanced bool) (*Balance, error) {
 }
 
 func (g *GeneralAPI) GetCountries(country string) ([]Country, error) {
-	url := g.client.BaseUrl("getCountries")
-
+	values := url.Values{}
 	if country != "" {
-		url = fmt.Sprintf("%s&country=%s", url, country)
+		values.Add("country", country)
 	}
 
 	rs := &GetCountriesResp{}
-	if err := g.client.Get(url, rs); err != nil {
+	if err := g.client.Get("getCountries", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -87,10 +86,8 @@ func (g *GeneralAPI) GetCountries(country string) ([]Country, error) {
 }
 
 func (g *GeneralAPI) GetIP() (string, error) {
-	url := g.client.BaseUrl("getIP")
-
 	respStruct := &GetIPResp{}
-	if err := g.client.Get(url, respStruct); err != nil {
+	if err := g.client.Get("getIP", url.Values{}, respStruct); err != nil {
 		return "", err
 	}
 
@@ -98,14 +95,13 @@ func (g *GeneralAPI) GetIP() (string, error) {
 }
 
 func (g *GeneralAPI) GetLanguages(language string) ([]Language, error) {
-	url := g.client.BaseUrl("getLanguages")
-
+	values := url.Values{}
 	if language != "" {
-		url = fmt.Sprintf("%s&language=%s", url, language)
+		values.Add("language", language)
 	}
 
 	rs := &GetLanguagesResp{}
-	if err := g.client.Get(url, rs); err != nil {
+	if err := g.client.Get("getLanguages", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -113,14 +109,13 @@ func (g *GeneralAPI) GetLanguages(language string) ([]Language, error) {
 }
 
 func (g *GeneralAPI) GetServerInfo(serverPop string) ([]Server, error) {
-	url := g.client.BaseUrl("getServersInfo")
-
+	values := url.Values{}
 	if serverPop != "" {
-		url = fmt.Sprintf("%s&server_pop=%s", url, serverPop)
+		values.Add("server_pop", serverPop)
 	}
 
 	rs := &GetServerInfoResp{}
-	if err := g.client.Get(url, rs); err != nil {
+	if err := g.client.Get("getServersInfo", values, rs); err != nil {
 		return nil, err
 	}
 

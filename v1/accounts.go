@@ -1,9 +1,9 @@
 package v1
 
 import (
-	"fmt"
 	"errors"
 	"strconv"
+	"net/url"
 )
 
 type AccountsAPI struct {
@@ -168,14 +168,13 @@ func (a *AccountsAPI) DelSubAccount(id string) error {
 }
 
 func (a *AccountsAPI) GetAllowedCodecs(codec string) ([]Codec, error) {
-	url := a.client.BaseUrl("getAllowedCodecs")
-
+	values := url.Values{}
 	if codec != "" {
-		url = fmt.Sprintf("%s&codec=%s", url, codec)
+		values.Add("codec", codec)
 	}
 
 	rs := &GetAllowedCodecsResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getAllowedCodecs", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -183,14 +182,13 @@ func (a *AccountsAPI) GetAllowedCodecs(codec string) ([]Codec, error) {
 }
 
 func (a *AccountsAPI) GetAuthTypes(authType int) ([]AuthType, error) {
-	url := a.client.BaseUrl("getAuthTypes")
-
+	values := url.Values{}
 	if authType > 0 {
-		url = fmt.Sprintf("%s&type=%d", url, authType)
+		values.Add("type", strconv.Itoa(authType))
 	}
 
 	rs := &GetAuthTypesResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getAuthTypes", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -198,14 +196,13 @@ func (a *AccountsAPI) GetAuthTypes(authType int) ([]AuthType, error) {
 }
 
 func (a *AccountsAPI) GetDeviceTypes(deviceType int) ([]DeviceType, error) {
-	url := a.client.BaseUrl("getDeviceTypes")
-
+	values := url.Values{}
 	if deviceType > 0 {
-		url = fmt.Sprintf("%s&device_type=%d", url, deviceType)
+		values.Add("device_type", strconv.Itoa(deviceType))
 	}
 
 	rs := &GetDeviceTypesResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getDeviceTypes", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -213,14 +210,13 @@ func (a *AccountsAPI) GetDeviceTypes(deviceType int) ([]DeviceType, error) {
 }
 
 func (a *AccountsAPI) GetDTMFModes(DTMFMode string) ([]DTMFMode, error) {
-	url := a.client.BaseUrl("getDTMFModes")
-
+	values := url.Values{}
 	if DTMFMode != "" {
-		url = fmt.Sprintf("%s&dtmf_mode=%s", url, DTMFMode)
+		values.Add("dtmf_mode", DTMFMode)
 	}
 
 	rs := &GetDTMFModesResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getDTMFModes", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -230,14 +226,13 @@ func (a *AccountsAPI) GetDTMFModes(DTMFMode string) ([]DTMFMode, error) {
 //0 is an actual value for a Lock International entity so the signature of this message is a string opposed to an int.
 //This was done to avoid confusion with other functions that take 0 in order to return all values.
 func (a *AccountsAPI) GetLockInternational(lockInternational string) ([]LockInternational, error) {
-	url := a.client.BaseUrl("getLockInternational")
-
+	values := url.Values{}
 	if lockInternational != "" {
-		url = fmt.Sprintf("%s&lock_international=%s", url, lockInternational)
+		values.Add("lock_international", lockInternational)
 	}
 
 	rs := &GetLockInternationalResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getLockInternational", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -245,14 +240,13 @@ func (a *AccountsAPI) GetLockInternational(lockInternational string) ([]LockInte
 }
 
 func (a *AccountsAPI) GetMusicOnHold(musicOnHold string) ([]MusicOnHold, error) {
-	url := a.client.BaseUrl("getMusicOnHold")
-
+	values := url.Values{}
 	if musicOnHold != "" {
-		url = fmt.Sprintf("%s&music_on_hold=%s", url, musicOnHold)
+		values.Add("music_on_hold", musicOnHold)
 	}
 
 	rs := &GetMusicOnHoldResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getMusicOnHold", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -260,14 +254,13 @@ func (a *AccountsAPI) GetMusicOnHold(musicOnHold string) ([]MusicOnHold, error) 
 }
 
 func (a *AccountsAPI) GetNAT(NAT string) ([]NAT, error) {
-	url := a.client.BaseUrl("getNAT")
-
+	values := url.Values{}
 	if NAT != "" {
-		url = fmt.Sprintf("%s&nat=%s", url, NAT)
+		values.Add("nat", NAT)
 	}
 
 	rs := &GetNATResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getNAT", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -275,14 +268,13 @@ func (a *AccountsAPI) GetNAT(NAT string) ([]NAT, error) {
 }
 
 func (a *AccountsAPI) GetProtocols(protocol int) ([]Protocol, error) {
-	url := a.client.BaseUrl("getProtocols")
-
+	values := url.Values{}
 	if protocol > 0 {
-		url = fmt.Sprintf("%s&protocol=%d", url, protocol)
+		values.Add("protocol", strconv.Itoa(protocol))
 	}
 
 	rs := &GetProtocolResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getProtocols", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -290,16 +282,15 @@ func (a *AccountsAPI) GetProtocols(protocol int) ([]Protocol, error) {
 }
 
 func (a *AccountsAPI) GetRegistrationStatus(account string) (bool, []RegistrationStatus, error) {
-	url := a.client.BaseUrl("getRegistrationStatus")
-
 	if account == "" {
 		return false, nil, errors.New("missing_account")
 	}
 
-	url = fmt.Sprintf("%s&account=%s", url, account)
+	values := url.Values{}
+	values.Add("account", account)
 
 	rs := &GetRegistrationStatusResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getRegistrationStatus", values, rs); err != nil {
 		return false, nil, err
 	}
 
@@ -307,14 +298,13 @@ func (a *AccountsAPI) GetRegistrationStatus(account string) (bool, []Registratio
 }
 
 func (a *AccountsAPI) GetReportEstimatedHoldTime(typ3 string) ([]EstimatedHoldTime, error) {
-	url := a.client.BaseUrl("getReportEstimatedHoldTime")
-
+	values := url.Values{}
 	if typ3 != "" {
-		url = fmt.Sprintf("%s&type=%s", url, typ3)
+		values.Add("type", typ3)
 	}
 
 	rs := &GetReportEstimatedHoldTimeResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getReportEstimatedHoldTime", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -322,14 +312,13 @@ func (a *AccountsAPI) GetReportEstimatedHoldTime(typ3 string) ([]EstimatedHoldTi
 }
 
 func (a *AccountsAPI) GetRoutes(route int) ([]Route, error) {
-	url := a.client.BaseUrl("getRoutes")
-
+	values := url.Values{}
 	if route > 0 {
-		url = fmt.Sprintf("%s&route=%d", url, route)
+		values.Add("route", strconv.Itoa(route))
 	}
 
 	rs := &GetRoutesResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getRoutes", values, rs); err != nil {
 		return nil, err
 	}
 
@@ -337,14 +326,13 @@ func (a *AccountsAPI) GetRoutes(route int) ([]Route, error) {
 }
 
 func (a *AccountsAPI) GetSubAccounts(account string) ([]Account, error) {
-	url := a.client.BaseUrl("getSubAccounts")
-
+	values := url.Values{}
 	if account != "" {
-		url = fmt.Sprintf("%s&account=%s", url, account)
+		values.Add("account", account)
 	}
 
 	rs := &GetSubAccountsResp{}
-	if err := a.client.Get(url, rs); err != nil {
+	if err := a.client.Get("getSubAccounts", values, rs); err != nil {
 		return nil, err
 	}
 
