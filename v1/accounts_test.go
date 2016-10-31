@@ -778,7 +778,7 @@ func TestAccountsAPI_GetProtocols_Specified(t *testing.T) {
 	require.Equal(t, rq.Protocols[0], protocols[0])
 }
 
-func TestAccountsAPI_GetRegistrationStatus_NotSpecified(t *testing.T) {
+func TestAccountsAPI_GetRegistrationStatus(t *testing.T) {
 
 	//setup
 	rq := GetRegistrationStatusResp{
