@@ -2,6 +2,8 @@ package v1
 
 import (
 	"net/url"
+	"time"
+	"errors"
 )
 
 type GeneralAPI struct {
@@ -54,6 +56,19 @@ type Server struct {
 	ServerIP        string `json:"server_ip"`
 	ServerCountry   string `json:"server_country"`
 	ServerPop       string `json:"server_pop"`
+}
+
+type GetTransactionHistoryResp struct {
+	BaseResp
+	Transactions []Transaction `json:"transactions"`
+}
+
+type Transaction struct {
+	Date        string `json:"date"` //can't be time.Time as the API likes to return things like this: {"date":"2015-11-02 to 2016-11-01","uniqueid":"n\/a","type":"CNAM Queries","description":"CNAM Queries","ammount":"-0.2160"}
+	UniqueId    string `json:"uniqueid"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Amount      string `json:"amount"`
 }
 
 func (g *GeneralAPI) GetBalance(advanced bool) (*Balance, error) {
@@ -120,4 +135,24 @@ func (g *GeneralAPI) GetServerInfo(serverPop string) ([]Server, error) {
 	}
 
 	return rs.Servers, nil
+}
+
+func (g *GeneralAPI) GetTransactionHistory(dateFrom, dateTo time.Time) ([]Transaction, error) {
+	values := url.Values{}
+	if dateFrom.IsZero() {
+		return nil, errors.New("dateFrom is required!")
+	}
+	values.Add("date_from", dateFrom.Format("2006-01-02 15:04:05"))
+
+	if dateTo.IsZero() {
+		return nil, errors.New("dateTo is required!")
+	}
+	values.Add("date_to", dateTo.Format("2006-01-02 15:04:05"))
+
+	rs := &GetTransactionHistoryResp{}
+	if err := g.client.Get("getTransactionHistory", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Transactions, nil
 }
