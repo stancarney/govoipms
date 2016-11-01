@@ -950,3 +950,251 @@ func TestAccountsAPI_GetReportEstimatedHoldTime_Specified(t *testing.T) {
 	require.Len(t, types, 1)
 	require.Equal(t, rq.Types[0], types[0])
 }
+
+func TestAccountsAPI_GetRoutes(t *testing.T) {
+	
+	//setup
+	rq := GetRoutesResp{
+		BaseResp{"success"},
+		[]Route{{"1", "one"}, {"2", "two"}},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getRoutes"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	//execute
+	routes, err := api.GetRoutes(0)
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, routes, 2)
+	require.Equal(t, rq.Routes, routes)
+}
+
+func TestAccountsAPI_GetRoutes_Error(t *testing.T) {
+
+	//setup
+	rq := GetRoutesResp{
+		BaseResp{"error"},
+		[]Route{},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getRoutes"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	//execute
+	routes, err := api.GetRoutes(0)
+
+	//verify
+	require.Nil(t, routes)
+	require.EqualError(t, err, "error")
+}
+
+func TestAccountsAPI_GetRoutes_Specified(t *testing.T) {
+
+	//setup
+	rq := GetRoutesResp{
+		BaseResp{"success"},
+		[]Route{{"1", "one"}},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getRoutes"}, r.URL.Query()["method"])
+		require.Equal(t, []string{"1"}, r.URL.Query()["route"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	//execute
+	routes, err := api.GetRoutes(1)
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, routes, 1)
+	require.Equal(t, rq.Routes, routes)
+}
+
+func TestAccountsAPI_GetSubAccounts(t *testing.T) {
+
+	//setup
+	rq := GetSubAccountsResp{
+		BaseResp{"success"},
+		[]Account{{Id: "1"}, {Id: "2"}},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getSubAccounts"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	//execute
+	accounts, err := api.GetSubAccounts("")
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, accounts, 2)
+	require.Equal(t, rq.Accounts, accounts)
+}
+
+func TestAccountsAPI_GetSubAccounts_Error(t *testing.T) {
+
+	//setup
+	rq := GetSubAccountsResp{
+		BaseResp{"error"},
+		[]Account{},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getSubAccounts"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	//execute
+	accounts, err := api.GetSubAccounts("")
+
+	//verify
+	require.Nil(t, accounts)
+	require.EqualError(t, err, "error")
+}
+
+func TestAccountsAPI_GetSubAccounts_Specified(t *testing.T) {
+
+	//setup
+	rq := GetSubAccountsResp{
+		BaseResp{"success"},
+		[]Account{{Id: "1"}},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getSubAccounts"}, r.URL.Query()["method"])
+		require.Equal(t, []string{"1"}, r.URL.Query()["account"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	//execute
+	accounts, err := api.GetSubAccounts("1")
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, accounts, 1)
+	require.Equal(t, rq.Accounts, accounts)
+}
+
+func TestAccountsAPI_SetSubAccount(t *testing.T) {
+
+	//setup
+	rq := SetSubAccountResp{
+		BaseResp{"success"},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	a := &Account{
+		Username: "Test1",
+		Protocol: "1",
+		Description: "Description",
+		AuthType: "1",
+		Password: "Password1",
+		IP: "",
+		DeviceType: "2",
+		CalleridNumber: "5555551234",
+		CanadaRouting: "1",
+		LockInternational: "1",
+		InternationalRoute: "1",
+		MusicOnHold: "default",
+		AllowedCodecs: "ulaw;g729",
+		DTMFMode: "auto",
+		NAT: "yes",
+		InternalExtension: "",
+		InternalVoicemail: "",
+		InternalDialtime: "20",
+		ResellerClient: "0",
+		ResellerPackage: "0",
+		ResellerNextbilling: "0000-00-00",
+	}
+
+	//execute
+	err := api.SetSubAccount(a)
+
+	//verify
+	require.NoError(t, err)
+}
+
+func TestAccountsAPI_SetSubAccount_Error(t *testing.T) {
+
+	//setup
+	rq := SetSubAccountResp{
+		BaseResp{"error"},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewAccountsAPI()
+
+	a := &Account{
+		Username: "Test1",
+		Protocol: "1",
+		Description: "Description",
+		AuthType: "1",
+		Password: "Password1",
+		IP: "",
+		DeviceType: "2",
+		CalleridNumber: "5555551234",
+		CanadaRouting: "1",
+		LockInternational: "1",
+		InternationalRoute: "1",
+		MusicOnHold: "default",
+		AllowedCodecs: "ulaw;g729",
+		DTMFMode: "auto",
+		NAT: "yes",
+		InternalExtension: "",
+		InternalVoicemail: "",
+		InternalDialtime: "20",
+		ResellerClient: "0",
+		ResellerPackage: "0",
+		ResellerNextbilling: "0000-00-00",
+	}
+
+	//execute
+	err := api.SetSubAccount(a)
+
+	//verify
+	require.Error(t, err)
+}

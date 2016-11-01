@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func TestGeneralAPI_GetBalance_False(t *testing.T) {
+func TestGeneralAPI_GetBalance(t *testing.T) {
 
 	//setup
 	rq := GetBalanceResp {
