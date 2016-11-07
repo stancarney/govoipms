@@ -155,6 +155,10 @@ func (c *VOIPClient) NewAccountsAPI() *AccountsAPI {
 	return &AccountsAPI{c}
 }
 
+func (c *VOIPClient) NewCDRAPI() *CDRAPI {
+	return &CDRAPI{c}
+}
+
 func WriteStruct(writer *multipart.Writer, i interface{}) error {
 	val := reflect.Indirect(reflect.ValueOf(i))
 
