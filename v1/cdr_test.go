@@ -381,3 +381,123 @@ func TestCDRAPI_GetCDR_NoTimezone(t *testing.T) {
 	require.EqualError(t, err, "timezone is required!")
 	require.Len(t, cdrs, 0)
 }
+
+func TestCDRAPI_GetRates(t *testing.T) {
+
+	//setup
+	rq := GetRatesResp{
+		BaseResp{"success"},
+		[]Rate{
+			{
+				Destination: "all",
+				Prefix: "All Calls",
+				ClientIncrement: 60,
+				ClientRate: 0.015,
+				RealIncrement: 6,
+				RealRate: 0.0052,
+			},
+		},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getRates"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
+
+	//execute
+	rates, err := api.GetRates("1234", "Canada")
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, rates, 1)
+	require.Equal(t, rq.Rates, rates)
+}
+
+func TestCDRAPI_GetRates_Error(t *testing.T) {
+
+	//setup
+	rq := GetRatesResp{
+		BaseResp{"error"},
+		[]Rate{},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getRates"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
+
+	//execute
+	rates, err := api.GetRates("1234", "Canada")
+
+	//verify
+	require.EqualError(t, err, "error")
+	require.Len(t, rates, 0)
+}
+
+func TestCDRAPI_GetTerminationRates(t *testing.T) {
+
+	//setup
+	rq := GetTerminationRatesRep{
+		BaseResp{"success"},
+		NumberValueDescription{"2", "Premium"},
+		[]TerminationRate{
+			{
+				Destination: "Canada - 204 Manitoba",
+				Prefix: "1204",
+				Increment: 6,
+				Rate: 0.009,
+			},
+		},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getTerminationRates"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
+
+	//execute
+	rates, err := api.GetTerminationRates("2", "Canada")
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, rates, 1)
+	require.Equal(t, rq.Rates, rates)
+}
+
+func TestCDRAPI_GetTerminationRates_Error(t *testing.T) {
+
+	//setup
+	rq := GetTerminationRatesRep{
+		BaseResp{"error"},
+		NumberValueDescription{},
+		[]TerminationRate{},
+	}
+	result, _ := json.Marshal(rq)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getTerminationRates"}, r.URL.Query()["method"])
+		fmt.Fprintln(w, string(result))
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
+
+	//execute
+	rates, err := api.GetTerminationRates("2", "Canada")
+
+	//verify
+	require.EqualError(t, err, "error")
+	require.Len(t, rates, 0)
+}

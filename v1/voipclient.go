@@ -77,18 +77,18 @@ func (c *VOIPClient) Call(req *http.Request, respStruct interface{}) (*http.Resp
 }
 
 func (c *VOIPClient) Get(method string, values url.Values, entity interface{}) error {
-	
+
 	u, err := url.Parse(c.URL)
 	if err != nil {
 		return err
 	}
-	
+
 	values.Add("api_username", c.Username)
 	values.Add("api_password", c.Password)
 	values.Add("method", method)
-	
+
 	u.RawQuery = values.Encode()
-	
+
 	req, err := http.NewRequest("GET", u.String(), nil)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
@@ -113,7 +113,7 @@ func (c *VOIPClient) Get(method string, values url.Values, entity interface{}) e
 }
 
 func (c *VOIPClient) Post(method string, entity interface{}, respStruct interface{}) error {
-	
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 
@@ -143,7 +143,7 @@ func (c *VOIPClient) Post(method string, entity interface{}, respStruct interfac
 	if ok && s.GetStatus() != "success" {
 		return errors.New(s.GetStatus())
 	}
-	
+
 	return nil
 }
 
@@ -157,6 +157,10 @@ func (c *VOIPClient) NewAccountsAPI() *AccountsAPI {
 
 func (c *VOIPClient) NewCDRAPI() *CDRAPI {
 	return &CDRAPI{c}
+}
+
+func (c *VOIPClient) NewClientAPI() *ClientAPI {
+	return &ClientAPI{c}
 }
 
 func WriteStruct(writer *multipart.Writer, i interface{}) error {

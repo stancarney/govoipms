@@ -82,12 +82,12 @@ func (c *CDR) MarshalJSON() ([]byte, error) {
 */
 
 func (c *CDR) UnmarshalJSON(data []byte) error {
-	
+
 	fmt.Printf("%s\n", data)
-	
+
 	type Alias CDR
 	aux := &struct {
-		Date string `json:"date"`
+		Date     string `json:"date"`
 		Duration string `json:"duration"`
 		*Alias
 	}{
@@ -103,7 +103,7 @@ func (c *CDR) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	c.Date = d
-	
+
 	//duration
 	str := strings.Split(aux.Duration, ":")
 	fmt.Println(str)
@@ -121,10 +121,37 @@ func (c *CDR) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	
+
 	c.Duration = hour + min + sec
-	
+
 	return nil
+}
+
+type GetRatesResp struct {
+	BaseResp
+	Rates []Rate `json:"rates"`
+}
+
+type Rate struct {
+	Destination     string `json:"destination"`
+	Prefix          string `json:"prefix"`
+	ClientIncrement int `json:"client_increment"`
+	ClientRate      float64 `json:"client_rate"`
+	RealIncrement   int `json:"real_increment"`
+	RealRate        float64 `json:"real_rate"`
+}
+
+type GetTerminationRatesRep struct {
+	BaseResp
+	Route NumberValueDescription `json:"route"`
+	Rates []TerminationRate `json:"rates"`
+}
+
+type TerminationRate struct {
+	Destination string `json:"destination"`
+	Prefix      string `json:"prefix"`
+	Increment   int `json:"increment"`
+	Rate        float64 `json:"rate"`
 }
 
 func (c *CDRAPI) GetCallAccounts(clientId string) ([]CallAccount, error) {
@@ -200,7 +227,7 @@ func (c *CDRAPI) GetCDR(dateFrom, dateTo time.Time, callStatus CallStatus, timez
 	if callStatus.Failed {
 		values.Add("failed", "1")
 	}
-	
+
 	values.Add("calltype", callType)
 	values.Add("callbilling", callBilling)
 	values.Add("account", account)
@@ -211,4 +238,30 @@ func (c *CDRAPI) GetCDR(dateFrom, dateTo time.Time, callStatus CallStatus, timez
 	}
 
 	return rs.CDRs, nil
+}
+
+func (c *CDRAPI) GetRates(packag3, query string) ([]Rate, error) {
+	values := url.Values{}
+	values.Add("package", packag3)
+	values.Add("query", query)
+
+	rs := &GetRatesResp{}
+	if err := c.client.Get("getRates", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Rates, nil
+}
+
+func (c *CDRAPI) GetTerminationRates(route, query string) ([]TerminationRate, error) {
+	values := url.Values{}
+	values.Add("route", route)
+	values.Add("query", query)
+
+	rs := &GetTerminationRatesRep{}
+	if err := c.client.Get("getTerminationRates", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Rates, nil
 }
