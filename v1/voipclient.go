@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"bytes"
 	"net/url"
+	"io/ioutil"
 )
 
 type VOIPClient struct {
@@ -48,7 +49,6 @@ func NewVOIPClient(url, username, password string, debug bool) *VOIPClient {
 
 func (c *VOIPClient) Call(req *http.Request, respStruct interface{}) (*http.Response, error) {
 
-	//req.Header.Set("Content-Type", "multipart/form-data")
 	if c.Debug {
 		out, _ := httputil.DumpRequest(req, true)
 		log.Println(string(out))
@@ -61,14 +61,21 @@ func (c *VOIPClient) Call(req *http.Request, respStruct interface{}) (*http.Resp
 	}
 	defer resp.Body.Close()
 
+	body := resp.Body
 	if c.Debug {
-		log.Println("Response:", resp)
+		log.Println("Response: ", resp)
+
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Println(string(b))
+
+		body = ioutil.NopCloser(bytes.NewReader(b))
 	}
 
-	//str, _ := ioutil.ReadAll(resp.Body)
-	//log.Println(string(str))
-
-	decoder := json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(body)
 	if err := decoder.Decode(respStruct); err != nil {
 		return nil, err
 	}

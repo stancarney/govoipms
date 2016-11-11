@@ -255,8 +255,8 @@ func TestCDRAPI_GetCDR(t *testing.T) {
 
 	cs := CallStatus{true, true, true, true}
 	mst, _ := time.LoadLocation("America/Edmonton")
-	dateFrom := time.Now().Add(time.Hour * -300)
-	dateTo := time.Now()
+	dateFrom, _ := time.Parse("2006-01-02", "2016-10-26")
+	dateTo, _ := time.Parse("2006-01-02", "2016-11-07")
 
 	//execute
 	cdrs, err := api.GetCDR(dateFrom, dateTo, cs, mst, "all", "cb", "a")
@@ -298,87 +298,6 @@ func TestCDRAPI_GetCDR_Error(t *testing.T) {
 
 	//verify
 	require.Error(t, err)
-	require.Len(t, cdrs, 0)
-}
-
-func TestCDRAPI_GetCDR_NoFromDate(t *testing.T) {
-
-	//setup
-	//Magic string was easier than trying to Marshal a CDR record. Something that the API will never need.
-	result := `{"status":"error"}`
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, result)
-	}))
-	defer ts.Close()
-
-	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
-
-	cs := CallStatus{true, false, false, false}
-	mst, _ := time.LoadLocation("America/Edmonton")
-	dateFrom := time.Time{}
-	dateTo := time.Now()
-
-	//execute
-	cdrs, err := api.GetCDR(dateFrom, dateTo, cs, mst, "all", "", "")
-
-	//verify
-	require.Error(t, err)
-	require.EqualError(t, err, "dateFrom is required!")
-	require.Len(t, cdrs, 0)
-}
-
-func TestCDRAPI_GetCDR_NoDateTo(t *testing.T) {
-
-	//setup
-	//Magic string was easier than trying to Marshal a CDR record. Something that the API will never need.
-	result := `{"status":"error"}`
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, result)
-	}))
-	defer ts.Close()
-
-	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
-
-	cs := CallStatus{true, false, false, false}
-	mst, _ := time.LoadLocation("America/Edmonton")
-	dateFrom := time.Now().Add(time.Hour * -300)
-	dateTo := time.Time{}
-
-	//execute
-	cdrs, err := api.GetCDR(dateFrom, dateTo, cs, mst, "all", "", "")
-
-	//verify
-	require.Error(t, err)
-	require.EqualError(t, err, "dateTo is required!")
-	require.Len(t, cdrs, 0)
-}
-
-func TestCDRAPI_GetCDR_NoTimezone(t *testing.T) {
-
-	//setup
-	//Magic string was easier than trying to Marshal a CDR record. Something that the API will never need.
-	result := `{"status":"error"}`
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, result)
-	}))
-	defer ts.Close()
-
-	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
-
-	cs := CallStatus{true, false, false, false}
-	mst := &time.Location{}
-	dateFrom := time.Now().Add(time.Hour * -300)
-	dateTo := time.Now()
-
-	//execute
-	cdrs, err := api.GetCDR(dateFrom, dateTo, cs, mst, "all", "", "")
-
-	//verify
-	require.Error(t, err)
-	require.EqualError(t, err, "timezone is required!")
 	require.Len(t, cdrs, 0)
 }
 
@@ -500,4 +419,139 @@ func TestCDRAPI_GetTerminationRates_Error(t *testing.T) {
 	//verify
 	require.EqualError(t, err, "error")
 	require.Len(t, rates, 0)
+}
+
+func TestCDRAPI_GetResellerCDR(t *testing.T) {
+
+	//setup
+	//Magic string was easier than trying to Marshal a CDR record. Something that the API will never need.
+	result := `{"status":"success","cdr":[{
+	"date":"2016-11-07 10:17:34",
+	"callerid":"\"15554443333\" <15554443333>",
+	"destination":"15554441111",
+	"description":"Inbound DID",
+	"account":"123456",
+	"disposition":"ANSWERED",
+	"duration":"00:00:05",
+	"seconds":"5",
+	"total":"0.00090000",
+	"uniqueid":"982384595"
+	}]}`
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, []string{"getResellerCDR"}, r.URL.Query()["method"])
+		require.Equal(t, []string{"2016-10-26"}, r.URL.Query()["date_from"])
+		require.Equal(t, []string{"2016-11-07"}, r.URL.Query()["date_to"])
+		require.Equal(t, []string{"client"}, r.URL.Query()["client"])
+		require.Equal(t, []string{"1"}, r.URL.Query()["answered"])
+		require.Equal(t, []string{"1"}, r.URL.Query()["noanswer"])
+		require.Equal(t, []string{"1"}, r.URL.Query()["busy"])
+		require.Equal(t, []string{"1"}, r.URL.Query()["failed"])
+		require.Equal(t, []string{"-7"}, r.URL.Query()["timezone"])
+		require.Equal(t, []string{"all"}, r.URL.Query()["calltype"])
+		require.Equal(t, []string{"cb"}, r.URL.Query()["callbilling"])
+		require.Equal(t, []string{"a"}, r.URL.Query()["account"])
+		fmt.Fprintln(w, result)
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
+
+	cs := CallStatus{true, true, true, true}
+	mst, _ := time.LoadLocation("America/Edmonton")
+	dateFrom, _ := time.Parse("2006-01-02", "2016-10-26")
+	dateTo, _ := time.Parse("2006-01-02", "2016-11-07")
+
+	//execute
+	cdrs, err := api.GetResellerCDR(dateFrom, dateTo, "client", cs, mst, "all", "cb", "a")
+
+	//verify
+	require.NoError(t, err)
+	require.Len(t, cdrs, 1)
+	require.Equal(t, "\"15554443333\" <15554443333>", cdrs[0].CallerId)
+	require.Equal(t, "15554441111", cdrs[0].Destination)
+	require.Equal(t, "Inbound DID", cdrs[0].Description)
+	require.Equal(t, "123456", cdrs[0].Account)
+	require.Equal(t, "ANSWERED", cdrs[0].Disposition)
+	require.Equal(t, time.Second * 5, cdrs[0].Duration)
+	require.Equal(t, 0.0, cdrs[0].Rate)
+	require.Equal(t, 0.0009, cdrs[0].Total)
+	require.Equal(t, "982384595", cdrs[0].UniqueId)
+}
+
+func TestCDRAPI_GetResellerCDR_Error(t *testing.T) {
+
+	//setup
+	//Magic string was easier than trying to Marshal a CDR record. Something that the API will never need.
+	result := `{"status":"invalid_something"}`
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, result)
+	}))
+	defer ts.Close()
+
+	api := NewVOIPClient(ts.URL, "", "", true).NewCDRAPI()
+
+	cs := CallStatus{true, false, false, false}
+	mst, _ := time.LoadLocation("America/Edmonton")
+	dateFrom := time.Now().Add(time.Hour * -300)
+	dateTo := time.Now()
+
+	//execute
+	cdrs, err := api.GetResellerCDR(dateFrom, dateTo, "client", cs, mst, "all", "", "")
+
+	//verify
+	require.Error(t, err)
+	require.Len(t, cdrs, 0)
+}
+
+func TestBuildCDR_NoFromDate(t *testing.T) {
+
+	//setup
+	cs := CallStatus{true, false, false, false}
+	mst, _ := time.LoadLocation("America/Edmonton")
+	dateFrom := time.Time{}
+	dateTo := time.Now()
+
+	//execute
+	cdrs, err := buildCDR(dateFrom, dateTo, cs, mst, "all", "", "")
+
+	//verify
+	require.Error(t, err)
+	require.EqualError(t, err, "dateFrom is required!")
+	require.Len(t, cdrs, 0)
+}
+
+func TestBuildCDR_NoDateTo(t *testing.T) {
+
+	//setup
+	cs := CallStatus{true, false, false, false}
+	mst, _ := time.LoadLocation("America/Edmonton")
+	dateFrom := time.Now().Add(time.Hour * -300)
+	dateTo := time.Time{}
+
+	//execute
+	cdrs, err := buildCDR(dateFrom, dateTo, cs, mst, "all", "", "")
+
+	//verify
+	require.Error(t, err)
+	require.EqualError(t, err, "dateTo is required!")
+	require.Len(t, cdrs, 0)
+}
+
+func TestBuildCDR_NoTimezone(t *testing.T) {
+
+	//setup
+	cs := CallStatus{true, false, false, false}
+	mst := &time.Location{}
+	dateFrom := time.Now().Add(time.Hour * -300)
+	dateTo := time.Now()
+
+	//execute
+	cdrs, err := buildCDR(dateFrom, dateTo, cs, mst, "all", "", "")
+
+	//verify
+	require.Error(t, err)
+	require.EqualError(t, err, "timezone is required!")
+	require.Len(t, cdrs, 0)
 }

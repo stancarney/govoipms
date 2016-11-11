@@ -55,7 +55,7 @@ type CDR struct {
 	Disposition string `json:"disposition"`
 	Duration    time.Duration `json:"duration"`
 	Seconds     int `json:"seconds,string"`
-	Rate        float64 `json:"rate,string"`
+	Rate        float64 `json:"rate,string,omitempty"`
 	Total       float64 `json:"total,string"`
 	UniqueId    string `json:"uniqueid"`
 }
@@ -194,6 +194,62 @@ func (c *CDRAPI) GetCallTypes(clientId string) ([]CallType, error) {
 }
 
 func (c *CDRAPI) GetCDR(dateFrom, dateTo time.Time, callStatus CallStatus, timezone *time.Location, callType, callBilling, account string) ([]CDR, error) {
+	values, err := buildCDR(dateFrom, dateTo, callStatus, timezone, callType, callBilling, account)
+	if err != nil {
+		return nil, err
+	}
+
+	rs := &GetCDRResp{}
+	if err := c.client.Get("getCDR", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.CDRs, nil
+}
+
+func (c *CDRAPI) GetRates(packag3, query string) ([]Rate, error) {
+	values := url.Values{}
+	values.Add("package", packag3)
+	values.Add("query", query)
+
+	rs := &GetRatesResp{}
+	if err := c.client.Get("getRates", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Rates, nil
+}
+
+func (c *CDRAPI) GetTerminationRates(route, query string) ([]TerminationRate, error) {
+	values := url.Values{}
+	values.Add("route", route)
+	values.Add("query", query)
+
+	rs := &GetTerminationRatesRep{}
+	if err := c.client.Get("getTerminationRates", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Rates, nil
+}
+
+func (c *CDRAPI) GetResellerCDR(dateFrom, dateTo time.Time, client string, callStatus CallStatus, timezone *time.Location, callType, callBilling, account string) ([]CDR, error) {
+	values, err := buildCDR(dateFrom, dateTo, callStatus, timezone, callType, callBilling, account)
+	if err != nil {
+		return nil, err
+	}
+
+	values.Add("client", client)
+	
+	rs := &GetCDRResp{}
+	if err := c.client.Get("getResellerCDR", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.CDRs, nil
+}
+
+func buildCDR(dateFrom, dateTo time.Time, callStatus CallStatus, timezone *time.Location, callType, callBilling, account string) (url.Values, error) {
 	values := url.Values{}
 	if dateFrom.IsZero() {
 		return nil, errors.New("dateFrom is required!")
@@ -232,36 +288,5 @@ func (c *CDRAPI) GetCDR(dateFrom, dateTo time.Time, callStatus CallStatus, timez
 	values.Add("callbilling", callBilling)
 	values.Add("account", account)
 
-	rs := &GetCDRResp{}
-	if err := c.client.Get("getCDR", values, rs); err != nil {
-		return nil, err
-	}
-
-	return rs.CDRs, nil
-}
-
-func (c *CDRAPI) GetRates(packag3, query string) ([]Rate, error) {
-	values := url.Values{}
-	values.Add("package", packag3)
-	values.Add("query", query)
-
-	rs := &GetRatesResp{}
-	if err := c.client.Get("getRates", values, rs); err != nil {
-		return nil, err
-	}
-
-	return rs.Rates, nil
-}
-
-func (c *CDRAPI) GetTerminationRates(route, query string) ([]TerminationRate, error) {
-	values := url.Values{}
-	values.Add("route", route)
-	values.Add("query", query)
-
-	rs := &GetTerminationRatesRep{}
-	if err := c.client.Get("getTerminationRates", values, rs); err != nil {
-		return nil, err
-	}
-
-	return rs.Rates, nil
+	return values, nil
 }
