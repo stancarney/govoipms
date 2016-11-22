@@ -64,7 +64,7 @@ func TestGeneralAPI_GetBalance_True(t *testing.T) {
 	//setup
 	rq := GetBalanceResp {
 		BaseResp{"success"},
-		Balance{"100", 0.0, 0.1, "60", 0.2, 1, "55"},
+		Balance{"100", "0.0", "0.1", "60", "0.2", 1, "55"},
 	}
 	result, _ := json.Marshal(rq)
 

@@ -83,8 +83,6 @@ func (c *CDR) MarshalJSON() ([]byte, error) {
 
 func (c *CDR) UnmarshalJSON(data []byte) error {
 
-	fmt.Printf("%s\n", data)
-
 	type Alias CDR
 	aux := &struct {
 		Date     string `json:"date"`

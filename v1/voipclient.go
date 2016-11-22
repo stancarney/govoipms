@@ -128,7 +128,7 @@ func (c *VOIPClient) Post(method string, entity interface{}, respStruct interfac
 	bodyWriter.WriteField("api_password", c.Password)
 	bodyWriter.WriteField("method", method)
 
-	if err := WriteStruct(bodyWriter, entity); err != nil {
+	if err := c.WriteStruct(bodyWriter, entity); err != nil {
 		return err
 	}
 
@@ -166,23 +166,50 @@ func (c *VOIPClient) NewCDRAPI() *CDRAPI {
 	return &CDRAPI{c}
 }
 
-func (c *VOIPClient) NewClientAPI() *ClientAPI {
-	return &ClientAPI{c}
+func (c *VOIPClient) NewClientAPI() *ClientsAPI {
+	return &ClientsAPI{c}
 }
 
-func WriteStruct(writer *multipart.Writer, i interface{}) error {
-	val := reflect.Indirect(reflect.ValueOf(i))
+func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) error {
+	val := reflect.Indirect(reflect.ValueOf(iface))
 
+	FieldLoop:
 	for i := 0; i < val.NumField(); i++ {
 
 		structField := val.Type().Field(i)
+		jsonTag := structField.Tag.Get("json")
 
-		name := strings.TrimSuffix(structField.Tag.Get("json"), ",omitempty") //TODO:Stan the omitempty is rather fragile.
+		name := strings.TrimSuffix(jsonTag, ",omitempty")
 		if name == "" {
 			name = strings.ToLower(structField.Name)
 		}
 
-		value := val.Field(i).Interface().(string)
+		value := ""
+
+		t := structField.Type
+		switch t.Kind() {
+		case reflect.Struct:
+			if err := c.WriteStruct(writer, val.Field(i).Interface()); err != nil {
+				return err
+			}
+			continue FieldLoop
+		case reflect.String:
+			value = val.Field(i).Interface().(string)
+			if value == "" && strings.Contains(jsonTag, ",omitempty") {
+				continue FieldLoop
+			}
+		case reflect.Bool:
+			b := val.Field(i).Interface().(bool)
+			if b {
+				value = "true"
+			} else {
+				continue FieldLoop //false is assumed when the field is not present.
+			}
+		default:
+			if c.Debug {
+				log.Println("Unsupported type attempted to be written via WriteStruct:", t)
+			}
+		}
 
 		if err := writer.WriteField(name, value); err != nil {
 			return err

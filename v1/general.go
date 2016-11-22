@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"time"
 	"errors"
+	"encoding/json"
 )
 
 type GeneralAPI struct {
@@ -16,13 +17,13 @@ type GetBalanceResp struct {
 }
 
 type Balance struct {
-	CurrentBalance string `json:"current_balance"`
-	SpentTotal     float64 `json:"spent_total,omitempty"`
-	CallsTotal     float64 `json:"calls_total,omitempty"`
-	TimeTotal      string `json:"time_total,omitempty"`
-	SpentToday     float64 `json:"spent_today,omitempty"`
+	CurrentBalance json.Number `json:"current_balance"`
+	SpentTotal     json.Number `json:"spent_total,omitempty"`
+	CallsTotal     json.Number `json:"calls_total,omitempty"`
+	TimeTotal      json.Number `json:"time_total,omitempty"` //TODO:Stan change to duration
+	SpentToday     json.Number `json:"spent_today,omitempty"`
 	CallsToday     int `json:"calls_today,omitempty"`
-	TimeToday      string `json:"time_today,omitempty"`
+	TimeToday      json.Number `json:"time_today,omitempty"`
 }
 
 type GetCountriesResp struct {
