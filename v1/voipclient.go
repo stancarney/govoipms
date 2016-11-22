@@ -166,8 +166,12 @@ func (c *VOIPClient) NewCDRAPI() *CDRAPI {
 	return &CDRAPI{c}
 }
 
-func (c *VOIPClient) NewClientAPI() *ClientsAPI {
+func (c *VOIPClient) NewClientsAPI() *ClientsAPI {
 	return &ClientsAPI{c}
+}
+
+func (c *VOIPClient) NewDIDsAPI() *DIDsAPI {
+	return &DIDsAPI{c}
 }
 
 func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) error {
@@ -188,22 +192,22 @@ func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) er
 
 		t := structField.Type
 		switch t.Kind() {
-		case reflect.Struct:
+		case reflect.Struct: //Write nested structs out and continue to the next field.
 			if err := c.WriteStruct(writer, val.Field(i).Interface()); err != nil {
 				return err
 			}
 			continue FieldLoop
-		case reflect.String:
+		case reflect.String: //Only write non-empty strings if they allow it with their JSON tags.
 			value = val.Field(i).Interface().(string)
 			if value == "" && strings.Contains(jsonTag, ",omitempty") {
 				continue FieldLoop
 			}
-		case reflect.Bool:
+		case reflect.Bool: //Only write booleans if they are true. False is assumed if the field is not present in the request.
 			b := val.Field(i).Interface().(bool)
 			if b {
 				value = "true"
 			} else {
-				continue FieldLoop //false is assumed when the field is not present.
+				continue FieldLoop
 			}
 		default:
 			if c.Debug {
