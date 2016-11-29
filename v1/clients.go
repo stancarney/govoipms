@@ -50,8 +50,6 @@ type Charge struct {
 
 func (c *Charge) UnmarshalJSON(data []byte) error {
 
-	fmt.Printf("%s\n", data)
-
 	type Alias Charge
 	aux := &struct {
 		Date string `json:"date"`
@@ -143,6 +141,7 @@ type GetResellerBalanceResp struct {
 
 type SetClientReq Client
 
+//TODO:Stan Req objects aren't needed out side of the package. Change.
 type SetClientThresholdReq struct {
 	Client    string `json:"client"`
 	Threshold string `json:"threshold"`
@@ -158,12 +157,12 @@ type SignupClientReq struct {
 
 func (c *ClientsAPI) AddCharge(client, description string, charge float64, test bool) (string, error) {
 	rs := &BaseResp{}
-	rq := &AddChargeReq{}
-
-	rq.Client = client
-	rq.Charge = fmt.Sprintf("%f", charge)
-	rq.Description = description
-	rq.Test = fmt.Sprintf("%t", test)
+	rq := &AddChargeReq{
+		Client: client,
+		Charge: fmt.Sprintf("%f", charge),
+		Description: description,
+		Test: fmt.Sprintf("%t", test),
+	}
 
 	if err := c.client.Post("addCharge", rq, rs); err != nil {
 		return "", err
@@ -174,12 +173,12 @@ func (c *ClientsAPI) AddCharge(client, description string, charge float64, test 
 
 func (c *ClientsAPI) AddPayment(client, description string, payment float64, test bool) (string, error) {
 	rs := &BaseResp{}
-	rq := &AddPaymentReq{}
-
-	rq.Client = client
-	rq.Payment = fmt.Sprintf("%f", payment)
-	rq.Description = description
-	rq.Test = fmt.Sprintf("%t", test)
+	rq := &AddPaymentReq{
+		Client: client,
+		Payment: fmt.Sprintf("%f", payment),
+		Description: description,
+		Test: fmt.Sprintf("%t", test),
+	}
 
 	if err := c.client.Post("addPayment", rq, rs); err != nil {
 		return "", err
@@ -291,6 +290,7 @@ func (c *ClientsAPI) GetResellerBalance(client string) (*Balance, error) {
 }
 
 func (c *ClientsAPI) SetClient(client *Client) (string, error) {
+	//TODO: Stan  change API to just return error and not status.
 	rs := &BaseResp{}
 	rq := *client
 

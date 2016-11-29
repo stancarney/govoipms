@@ -12,6 +12,8 @@ import (
 	"bytes"
 	"net/url"
 	"io/ioutil"
+	"fmt"
+	"encoding"
 )
 
 type VOIPClient struct {
@@ -189,30 +191,46 @@ func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) er
 		}
 
 		value := ""
+		omitEmpty := strings.Contains(jsonTag, ",omitempty")
+		o := val.Field(i).Interface()
 
 		t := structField.Type
 		switch t.Kind() {
-		case reflect.Struct: //Write nested structs out and continue to the next field.
-			if err := c.WriteStruct(writer, val.Field(i).Interface()); err != nil {
+		case reflect.Struct:
+			tm, ok := o.(encoding.TextMarshaler)
+			if ok {
+				text, err := tm.MarshalText()
+				if err != nil {
+					return err
+				}
+
+				value = string(text)
+				break
+			}
+
+			//Write nested structs out and continue to the next field.
+			//It is possible for nested struct field names to collide with top level field names with how this works.
+			if err := c.WriteStruct(writer, o); err != nil {
 				return err
 			}
 			continue FieldLoop
-		case reflect.String: //Only write non-empty strings if they allow it with their JSON tags.
-			value = val.Field(i).Interface().(string)
-			if value == "" && strings.Contains(jsonTag, ",omitempty") {
-				continue FieldLoop
-			}
 		case reflect.Bool: //Only write booleans if they are true. False is assumed if the field is not present in the request.
-			b := val.Field(i).Interface().(bool)
+			b := o.(bool)
 			if b {
 				value = "true"
 			} else {
 				continue FieldLoop
 			}
+		case reflect.String: //Only write non-empty strings if they allow it with their JSON tags.
+			value = o.(string)
+			if value == "" && omitEmpty {
+				continue FieldLoop
+			}
 		default:
 			if c.Debug {
-				log.Println("Unsupported type attempted to be written via WriteStruct:", t)
+				log.Println("Unknown type being written via WriteStruct:", t)
 			}
+			value = fmt.Sprintf("%v", o)
 		}
 
 		if err := writer.WriteField(name, value); err != nil {
