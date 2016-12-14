@@ -77,16 +77,6 @@ type RateCenter struct {
 	Available  bool `json:"available"`
 }
 
-type GetStatesResp struct {
-	BaseResp
-	States []State `json:"states"`
-}
-
-type State struct {
-	State       string `json:"state"`
-	Description string `json:"description"`
-}
-
 func (c *RateCenter) UnmarshalJSON(data []byte) error {
 
 	type Alias RateCenter
@@ -106,6 +96,61 @@ func (c *RateCenter) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
+type GetStatesResp struct {
+	BaseResp
+	States []State `json:"states"`
+}
+
+type State struct {
+	State       string `json:"state"`
+	Description string `json:"description"`
+}
+
+type GetStaticMembersResp struct {
+	BaseResp
+	Members []Member `json:"members"`
+}
+
+type Member struct {
+	Member    string `json:"member"`
+	QueueName string `json:"queue_name"`
+	Name      string `json:"name"`
+	Account   string `json:"account"`
+	Priority  string `json:"priority"`
+}
+
+type GetTimeConditionsResp struct {
+	BaseResp
+	TimeConditions []TimeCondition `json:"timeconditon"`
+}
+
+type TimeCondition struct {
+	TimeCondition  string `json:"timecondition"`
+	Name           string `json:"name"`
+	RoutingMatch   string `json:"routingmatch"`
+	RoutingNoMatch string `json:"routingnomatch"`
+	StartHour      string `json:"starthour"`
+	StartMinute    string `json:"startminute"`
+	EndHour        string `json:"endhour"`
+	EndMinute      string `json:"endminute"`
+	WeekdayStart   string `json:"weekdaystart"`
+	WeekdayEnd     string `json:"weekdayend"`
+}
+
+type GetVoicemailSetups struct {
+	BaseResp
+	VoicemailSetups []VoicemailSetup `json:"voicemailsetups"`
+}
+
+type VoicemailSetup NumberValueDescription
+
+type GetVoicemailAttachmentFormats struct {
+	BaseResp
+	VoicemailAttachmentFormats []VoicemailAttachmentFormat `json:"email_attachment_formats"`
+}
+
+type VoicemailAttachmentFormat StringValueDescription
 
 //TODO:Stan this isn't working. It returns "invalid_ratecenter" and I'm pretty sure the ratecenter is correct.
 func (d *DIDsAPI) BackOrderDIDUSA(backOrder *BackOrder) error {
@@ -162,4 +207,65 @@ func (d *DIDsAPI) GetStates() ([]State, error) {
 	}
 
 	return rs.States, nil
+}
+
+func (d *DIDsAPI) GetStaticMembers(queue, member string) ([]Member, error) {
+	values := url.Values{}
+	values.Add("queue", queue)
+
+	if member != "" {
+		values.Add("member", member)
+	}
+
+	rs := &GetStaticMembersResp{}
+	if err := d.client.Get("getStaticMembers", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Members, nil
+}
+
+func (d *DIDsAPI) GetTimeConditions(timeCondition string) ([]TimeCondition, error) {
+	values := url.Values{}
+
+	if timeCondition != "" {
+		values.Add("timecondition", timeCondition)
+	}
+
+	rs := &GetTimeConditionsResp{}
+	if err := d.client.Get("getTimeConditions", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.TimeConditions, nil
+}
+
+func (d *DIDsAPI) GetVoicemailSetups(voicemailSetup string) ([]VoicemailSetup, error) {
+	values := url.Values{}
+
+	if voicemailSetup != "" {
+		values.Add("voicemailsetup", voicemailSetup)
+	}
+
+	rs := &GetVoicemailSetups{}
+	if err := d.client.Get("getVoicemailSetups", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.VoicemailSetups, nil
+}
+
+func (d *DIDsAPI) GetVoicemailAttachmentFormats(emailAttachmentFormat string) ([]VoicemailAttachmentFormat, error) {
+	values := url.Values{}
+
+	if emailAttachmentFormat != "" {
+		values.Add("email_attachment_format", emailAttachmentFormat)
+	}
+
+	rs := &GetVoicemailAttachmentFormats{}
+	if err := d.client.Get("getVoicemailAttachmentFormats", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.VoicemailAttachmentFormats, nil
 }
