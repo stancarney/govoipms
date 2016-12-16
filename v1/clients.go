@@ -155,7 +155,7 @@ type SignupClientReq struct {
 	Activate        bool `json:"activate"`
 }
 
-func (c *ClientsAPI) AddCharge(client, description string, charge float64, test bool) (string, error) {
+func (c *ClientsAPI) AddCharge(client, description string, charge float64, test bool) error {
 	rs := &BaseResp{}
 	rq := &AddChargeReq{
 		Client: client,
@@ -165,13 +165,13 @@ func (c *ClientsAPI) AddCharge(client, description string, charge float64, test 
 	}
 
 	if err := c.client.Post("addCharge", rq, rs); err != nil {
-		return "", err
+		return err
 	}
 
-	return rs.Status, nil
+	return nil
 }
 
-func (c *ClientsAPI) AddPayment(client, description string, payment float64, test bool) (string, error) {
+func (c *ClientsAPI) AddPayment(client, description string, payment float64, test bool) error {
 	rs := &BaseResp{}
 	rq := &AddPaymentReq{
 		Client: client,
@@ -181,10 +181,10 @@ func (c *ClientsAPI) AddPayment(client, description string, payment float64, tes
 	}
 
 	if err := c.client.Post("addPayment", rq, rs); err != nil {
-		return "", err
+		return err
 	}
 
-	return rs.Status, nil
+	return nil
 }
 
 func (c *ClientsAPI) GetBalanceManagement(balanceManagement string) ([]BalanceManagement, error) {
@@ -289,19 +289,18 @@ func (c *ClientsAPI) GetResellerBalance(client string) (*Balance, error) {
 	return &rs.Balance, nil
 }
 
-func (c *ClientsAPI) SetClient(client *Client) (string, error) {
-	//TODO: Stan  change API to just return error and not status.
+func (c *ClientsAPI) SetClient(client *Client) error {
 	rs := &BaseResp{}
 	rq := *client
 
 	if err := c.client.Post("setClient", rq, rs); err != nil {
-		return "", err
+		return err
 	}
 
-	return rs.Status, nil
+	return nil
 }
 
-func (c *ClientsAPI) SetClientThreshold(client, threshold, email string) (string, error) {
+func (c *ClientsAPI) SetClientThreshold(client, threshold, email string) error {
 	rs := &BaseResp{}
 	rq := &SetClientThresholdReq{
 		client,
@@ -310,13 +309,13 @@ func (c *ClientsAPI) SetClientThreshold(client, threshold, email string) (string
 	}
 
 	if err := c.client.Post("setClientThreshold", rq, rs); err != nil {
-		return "", err
+		return err
 	}
 
-	return rs.Status, nil
+	return nil
 }
 
-func (c *ClientsAPI) SignupClient(client *Client, confirmEmail, confirmPassword string, activate bool) (string, error) {
+func (c *ClientsAPI) SignupClient(client *Client, confirmEmail, confirmPassword string, activate bool) error {
 	rs := &BaseResp{}
 	rq := &SignupClientReq{
 		*client,
@@ -326,8 +325,8 @@ func (c *ClientsAPI) SignupClient(client *Client, confirmEmail, confirmPassword 
 	}
 
 	if err := c.client.Post("signupClient", rq, rs); err != nil {
-		return "", err
+		return err
 	}
 
-	return rs.Status, nil
+	return nil
 }

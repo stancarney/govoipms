@@ -227,10 +227,10 @@ func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) er
 				continue FieldLoop
 			}
 		default:
-			if c.Debug {
-				log.Println("Unknown type being written via WriteStruct:", t)
-			}
 			value = fmt.Sprintf("%v", o)
+			if c.Debug {
+				log.Printf("Type: %s being written as value: %s for field: %s via WriteStruct:", t, value, name)
+			}
 		}
 
 		if err := writer.WriteField(name, value); err != nil {
