@@ -231,7 +231,7 @@ func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) er
 				continue FieldLoop
 			}
 		case reflect.String: //Only write non-empty strings if they allow it with their JSON tags.
-			value = o.(string)
+			value = fmt.Sprintf("%v", o) //json.Number and others also land here. Doing a o.(string) panics when that happens.
 			if value == "" && omitEmpty {
 				continue FieldLoop
 			}

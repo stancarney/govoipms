@@ -25,6 +25,22 @@ func (b BaseRoute) MarshalText() ([]byte, error) {
 	return []byte(b.String()), nil
 }
 
+func (b *BaseRoute) UnmarshalText(text []byte) error {
+	strs := strings.Split(string(text), ":")
+
+	l := len(strs)
+
+	if l > 0 {
+		b.Type = strs[0]
+	}
+
+	if l > 1 {
+		b.Value = strs[1]
+	}
+
+	return nil
+}
+
 //Helper to create account route.
 func NewAccountRoute(value string) BaseRoute {
 	return BaseRoute{"account", value}
@@ -105,12 +121,12 @@ type Order struct {
 	FailoverNoanswer    BaseRoute `json:"failover_noanswer,omitempty"`
 	Voicemail           string `json:"voicemail,omitempty"`
 	POP                 string `json:"pop"`
-	Dialtime            int `json:"dialtime"`
-	CNAM                int `json:"cnam"` //1: true, 0: false.
+	Dialtime            json.Number `json:"dialtime"`
+	CNAM                json.Number `json:"cnam"` //1: true, 0: false.
 	CalleridPrefix      string `json:"callerid_prefix,omitempty"`
 	Note                string `json:"note,omitempty"`
-	BillingType         int `json:"billing_type"`
-	Test                bool `json:"test"`
+	BillingType         json.Number `json:"billing_type"`
+	Test                bool `json:"test,omitempty"`
 }
 
 type CancelDIDResp struct {
@@ -127,6 +143,41 @@ type GetDIDCountriesResp struct {
 }
 
 type DIDCountries NumberValueDescription
+
+type GetDIDsCanResp struct {
+	BaseResp
+	DIDs []DID `json:"dids"`
+}
+
+type GetDIDsInfoResp struct {
+	BaseResp
+	DIDInfos []DIDInfo `json:"dids"`
+}
+
+type DIDInfo struct {
+	DID                   string `json:"did"`
+	Description           string `json:"description"`
+	Order
+	E911                  string `json:"e911"`
+	NextBilling           time.Time `json:"next_billing"`
+	OrderDate             time.Time `json:"next_billing"`
+	ResellerAccount       string `json:"reseller_account"`
+
+	ResellerNextBilling   string `json:"reseller_next_billing"`
+	ResellerMonthly       string `json:"reseller_monthly"`
+	ResellerMinute        string `json:"reseller_minute"`
+	ResellerSetup         string `json:"reseller_setup"`
+
+	SMSAvailable          int `json:"sms_available"`
+	SMSEnabled            string `json:"sms_enabled"`
+	SMSEmail              string `json:"sms_email"`
+	SMSEmailEnabled       string `json:"sms_email_enabled"`
+	SMSForward            string `json:"sms_forward"`
+	SMSForwardEnabled     string `json:"sms_forward_enabled"`
+	SMSURLCallback        string `json:"sms_url_callback"`
+	SMSURLCallbackEnabled string `json:"sms_url_callback_enabled"`
+	SMSURLCallbackEntry   string `json:"sms_url_callback_retry"`
+}
 
 type DelStaticMemberResp struct {
 	BaseResp
@@ -162,6 +213,13 @@ type CallerIDFilter struct {
 	FailoverNoanswer    string `json:"failover_noanswer"`
 	Note                string `json:"note"`
 }
+
+type GetCarriersResp struct {
+	BaseResp
+	Carriers []Carrier `json:"carriers"`
+}
+
+type Carrier NumberValueDescription
 
 type GetDIDsInternationalResp struct {
 	BaseResp
@@ -308,6 +366,7 @@ type DID struct {
 	FlatMonthly         string `json:"flat_monthly"`
 	FlatMinute          string `json:"flat_minute"`
 	FlatSetup           string `json:"flat_setup"`
+	SMS                 int `json:"sms,omitempty"`
 }
 
 type DIDSearchType string
@@ -342,9 +401,9 @@ func (d *DIDsAPI) BackOrderDIDCan(backOrder *BackOrder) error {
 	return nil
 }
 
-func (d *DIDsAPI) CancelDID(did, comment string, portOut, test bool) error {
+func (d *DIDsAPI) CancelDID(DID, comment string, portOut, test bool) error {
 	values := url.Values{}
-	values.Add("did", did)
+	values.Add("did", DID)
 
 	if portOut {
 		values.Add("portout", "true")
@@ -367,9 +426,9 @@ func (d *DIDsAPI) CancelDID(did, comment string, portOut, test bool) error {
 	return nil
 }
 
-func (d *DIDsAPI) ConnectDID(did, account, monthly, setup, minute string, nextBilling time.Time, dontChargeSetup, dontChargeMonthly bool) error {
+func (d *DIDsAPI) ConnectDID(DID, account, monthly, setup, minute string, nextBilling time.Time, dontChargeSetup, dontChargeMonthly bool) error {
 	values := url.Values{}
-	values.Add("did", did)
+	values.Add("did", DID)
 	values.Add("account", account)
 	values.Add("monthly", monthly)
 	values.Add("setup", setup)
@@ -486,8 +545,19 @@ func (d *DIDsAPI) GetCallerIDFiltering(filtering string) ([]CallerIDFilter, erro
 	return rs.CallerIDFilters, nil
 }
 
-func (d *DIDsAPI) GetCarriers() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetCarriers(carrier string) ([]Carrier, error) {
+	values := url.Values{}
+
+	if carrier != "" {
+		values.Add("carrier", carrier)
+	}
+
+	rs := &GetCarriersResp{}
+	if err := d.client.Get("getCarriers", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Carriers, nil
 }
 
 func (d *DIDsAPI) GetDIDCountries(countryId, typ3 string) ([]DIDCountries, error) {
@@ -506,12 +576,39 @@ func (d *DIDsAPI) GetDIDCountries(countryId, typ3 string) ([]DIDCountries, error
 	return rs.Countries, nil
 }
 
-func (d *DIDsAPI) GetDIDsCan() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetDIDsCan(province, rateCenter string) ([]DID, error) {
+	values := url.Values{}
+	values.Add("province", province)
+
+	if rateCenter != "" {
+		values.Add("ratecenter", rateCenter)
+	}
+
+	rs := &GetDIDsCanResp{}
+	if err := d.client.Get("getDIDsCAN", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.DIDs, nil
 }
 
-func (d *DIDsAPI) GetDIDsInfo() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetDIDsInfo(client, DID string) ([]DIDInfo, error) {
+	values := url.Values{}
+
+	if client != "" {
+		values.Add("client", client)
+	}
+
+	if DID != "" {
+		values.Add("did", DID)
+	}
+
+	rs := &GetDIDsInfoResp{}
+	if err := d.client.Get("getDIDsInfo", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.DIDInfos, nil
 }
 
 func (d *DIDsAPI) GetDIDsInternationalGeographic(countryId string) ([]InternationalLocations, error) {
