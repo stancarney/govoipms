@@ -156,6 +156,15 @@ func (c *VOIPClient) Post(method string, entity interface{}, respStruct interfac
 	return nil
 }
 
+// Function to simplify calls that only take a single string argument (i.e. an ID) and only return an error on failure, i.e. status != "success"
+func (c *VOIPClient) simpleCall(method, argName, argValue string) error {
+	values := url.Values{}
+	values.Add(argName, argValue)
+
+	rs := &BaseResp{}
+	return c.Get(method, values, rs)
+}
+
 func (c *VOIPClient) NewGeneralAPI() *GeneralAPI {
 	return &GeneralAPI{c}
 }

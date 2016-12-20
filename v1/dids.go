@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"errors"
+	"time"
 )
 
 type DIDsAPI struct {
@@ -40,7 +41,7 @@ func NewVMRoute(value string) BaseRoute {
 }
 
 //Helper to create sip route.
-func NewSipRoute() BaseRoute {
+func NewSIPRoute() BaseRoute {
 	return BaseRoute{"sip", ""}
 }
 
@@ -116,12 +117,51 @@ type CancelDIDResp struct {
 	BaseResp
 }
 
+type ConnectDIDResp struct {
+	BaseResp
+}
+
 type GetDIDCountriesResp struct {
 	BaseResp
 	Countries []DIDCountries `json:"countries"`
 }
 
 type DIDCountries NumberValueDescription
+
+type DelStaticMemberResp struct {
+	BaseResp
+}
+
+type GetCallbacksResp struct {
+	BaseResp
+	Callbacks []Callback `json:"callbacks"`
+}
+
+type Callback struct {
+	Callback        string `json:"callback"`
+	Description     string `json:"description"`
+	Number          string `json:"number"`
+	DelayBefore     int `json:"delay_before"`
+	ResponseTimeout int `json:"response_timeout"`
+	DigitTimeout    int `json:"digit_timeout"`
+	CalleridNumber  string `json:"callerid_number"`
+}
+
+type GetCallerIDFilteringResp struct {
+	BaseResp
+	CallerIDFilters []CallerIDFilter `json:"filtering"`
+}
+
+type CallerIDFilter struct {
+	Filtering           string `json:"filtering"`
+	Callerid            string `json:"callerid"`
+	DID                 string `json:"did"`
+	Routing             string `json:"routing"`
+	FailoverUnreachable string `json:"failover_unreachable"`
+	FailoverBusy        string `json:"failover_busy"`
+	FailoverNoanswer    string `json:"failover_noanswer"`
+	Note                string `json:"note"`
+}
 
 type GetDIDsInternationalResp struct {
 	BaseResp
@@ -327,72 +367,123 @@ func (d *DIDsAPI) CancelDID(did, comment string, portOut, test bool) error {
 	return nil
 }
 
-func (d *DIDsAPI) ConnectDID() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) ConnectDID(did, account, monthly, setup, minute string, nextBilling time.Time, dontChargeSetup, dontChargeMonthly bool) error {
+	values := url.Values{}
+	values.Add("did", did)
+	values.Add("account", account)
+	values.Add("monthly", monthly)
+	values.Add("setup", setup)
+	values.Add("minute", minute)
+
+	if !nextBilling.IsZero() {
+		values.Add("next_billing", nextBilling.Format("2006-01-02"))
+	}
+
+	if dontChargeSetup {
+		values.Add("dont_charge_setup", "true")
+	}
+
+	if dontChargeMonthly {
+		values.Add("dont_charge_monthly", "true")
+	}
+
+	rs := &ConnectDIDResp{}
+	if err := d.client.Get("connectDID", values, rs); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (d *DIDsAPI) DelCallback() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelCallback(callback string) error {
+	return d.client.simpleCall("delCallback", "callback", callback)
 }
 
-func (d *DIDsAPI) DelCallerIDFiltering() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelCallerIDFiltering(filtering string) error {
+	return d.client.simpleCall("delCallerIDFiltering", "filtering", filtering)
 }
 
-func (d *DIDsAPI) DelClient() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelClient(client string) error {
+	return d.client.simpleCall("delClient", "client", client)
 }
 
-func (d *DIDsAPI) DelDISA() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelDISA(disa string) error {
+	return d.client.simpleCall("delDISA", "disa", disa)
 }
 
-func (d *DIDsAPI) DelSMS() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DeleteSMS(id string) error {
+	return d.client.simpleCall("deleteSMS", "id", id)
 }
 
-func (d *DIDsAPI) DelForwarding() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelForwarding(forwarding string) error {
+	return d.client.simpleCall("delForwarding", "forwarding", forwarding)
 }
 
-func (d *DIDsAPI) DelIVR() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelIVR(ivr string) error {
+	return d.client.simpleCall("delIVR", "ivr", ivr)
 }
 
-func (d *DIDsAPI) DelPhonebook() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelPhonebook(phonebook string) error {
+	return d.client.simpleCall("delPhonebook", "phonebook", phonebook)
 }
 
-func (d *DIDsAPI) DelQueue() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelQueue(queue string) error {
+	return d.client.simpleCall("delQueue", "queue", queue)
 }
 
-func (d *DIDsAPI) DelRecording() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelRecording(recording string) error {
+	return d.client.simpleCall("delRecording", "recording", recording)
 }
 
-func (d *DIDsAPI) DelRingGroup() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelRingGroup(ringGroup string) error {
+	return d.client.simpleCall("delRingGroup", "ringGroup", ringGroup)
 }
 
-func (d *DIDsAPI) DelSIPURI() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelSIPURI(SIPURI string) error {
+	return d.client.simpleCall("delSIPURI", "sipuri", SIPURI)
 }
 
-func (d *DIDsAPI) DelStaticMember() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelStaticMember(member, queue string) error {
+	values := url.Values{}
+	values.Add("member", member)
+	values.Add("queue", queue)
+
+	rs := &DelStaticMemberResp{}
+	return d.client.Get("delStaticMember", values, rs)
 }
 
-func (d *DIDsAPI) DelTimeCondition() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) DelTimeCondition(timeCondition string) error {
+	return d.client.simpleCall("delTimeCondition", "timecondition", timeCondition)
 }
 
-func (d *DIDsAPI) GetCallbacks() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetCallbacks(callback string) ([]Callback, error) {
+	values := url.Values{}
+
+	if callback != "" {
+		values.Add("callback", callback)
+	}
+
+	rs := &GetCallbacksResp{}
+	if err := d.client.Get("getCallbacks", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Callbacks, nil
 }
 
-func (d *DIDsAPI) GetCallerIDFiltering() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetCallerIDFiltering(filtering string) ([]CallerIDFilter, error) {
+	values := url.Values{}
+
+	if filtering != "" {
+		values.Add("filtering", filtering)
+	}
+
+	rs := &GetCallerIDFilteringResp{}
+	if err := d.client.Get("getCallerIDFiltering", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.CallerIDFilters, nil
 }
 
 func (d *DIDsAPI) GetCarriers() error {
