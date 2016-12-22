@@ -6,6 +6,7 @@ import (
 	"strings"
 	"errors"
 	"time"
+	"fmt"
 )
 
 type DIDsAPI struct {
@@ -147,6 +148,154 @@ type DIDCountries NumberValueDescription
 type GetDIDsCanResp struct {
 	BaseResp
 	DIDs []DID `json:"dids"`
+}
+
+type GetDIDsUSAResp struct {
+	BaseResp
+	DIDs []DID `json:"dids"`
+}
+
+type GetDISAsResp struct {
+	BaseResp
+	DISAs []DISA `json:"disa"`
+}
+
+type DISA struct {
+	DISA             string `json:"disa"`
+	Name             string `json:"name"`
+	PIN              string `json:"pin"`
+	DigitTimeout     string `json:"digit_timeout"`
+	CalleridOverride string `json:"callerid_override"`
+}
+
+type GetForwardingsResp struct {
+	BaseResp
+	Forwardings []Forwarding `json:"forwardings"`
+}
+
+type Forwarding struct {
+	Forwarding       string `json:"forwarding"`
+	PhoneNumber      string `json:"phone_number"`
+	CalleridOverride string `json:"callerid_override"`
+	Description      string `json:"description"`
+	DTMFDigits       string `json:"dtmf_digits"`
+	Pause            string `json:"pause"`
+}
+
+type GetIVRsResp struct {
+	BaseResp
+	IVRs []IVR `json:"ivrs"`
+}
+
+type IVR struct {
+	IVR            string `json:"ivr"`
+	Name           string `json:"name"`
+	Recording      string `json:"recording"`
+	Timeout        string `json:"timeout"`
+	Language       string `json:"language"`
+	VoicemailSetup string `json:"voicemailsetup"`
+	Choices        []IVRChoice `json:"choices"`
+}
+
+func (i *IVR) UnmarshalJSON(data []byte) error {
+	type Alias IVR
+	aux := &struct {
+		Choices string `json:"choices"`
+		*Alias
+	}{
+		Alias: (*Alias)(i),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	//This converts the incoming string "1=account:12345;2=queue:3333" to IVRChoice Records
+	strs := strings.Split(aux.Choices, ";")
+	i.Choices = make([]IVRChoice, len(strs))
+
+	for idx, c := range strs {
+		i.Choices[idx] = IVRChoice{}
+		if err := i.Choices[idx].UnmarshalText([]byte(c)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type IVRChoice struct {
+	DTMFTone string
+	Route    BaseRoute
+}
+
+func (i IVRChoice) String() string {
+	return fmt.Sprintf("%s=%s", i.DTMFTone, i.Route)
+}
+
+func (i IVRChoice) MarshalText() ([]byte, error) {
+	return []byte(i.String()), nil
+}
+
+func (i *IVRChoice) UnmarshalText(text []byte) error {
+	strs := strings.Split(string(text), "=")
+
+	l := len(strs)
+
+	if l > 0 {
+		i.DTMFTone = strs[0]
+	}
+
+	if l > 1 {
+		i.Route = NewNoneRoute()
+		if err := i.Route.UnmarshalText([]byte(strs[1])); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type GetJoinWhenEmptyTypesResp struct {
+	BaseResp
+	JoinWhenEmptyTypes []JoinWhenEmptyType `json:"types"`
+}
+
+type JoinWhenEmptyType StringValueDescription
+
+type GetPhonebookResp struct {
+	BaseResp
+	Phonebooks []Phonebook `json:"phonebooks"`
+}
+
+type Phonebook struct {
+	Phonebook string `json:"phonebook"`
+	SpeedDial string `json:"speed_dial"`
+	Name      string `json:"name"`
+	Number    string `json:"number"`
+	Callerid  string `json:"callerid"`
+	Note      string `json:"note"`
+}
+
+type GetPortabilityResp struct {
+	BaseResp
+	Portable string `json:"portable"`
+	Plans    []Plan `json:"plans"`
+}
+
+type Plan struct {
+	Title         string `json:"title"`
+	PricePerMonth string `json:"pricePerMonth"` //Voip.MS API uses camelcase here instead of underscores for some reason.
+	PricePerMin   string `json:"pricePerMin"`
+}
+
+type GetProvincesResp struct {
+	BaseResp
+	Provinces []Province `json:"provinces"`
+}
+
+type Province struct {
+	Province    string `json:"province"`
+	Description string `json:"description"`
 }
 
 type GetDIDsInfoResp struct {
@@ -358,8 +507,10 @@ type SearchDIDsCanResp struct {
 type DID struct {
 	DID                 string `json:"did"`
 	Ratecenter          string `json:"ratecenter"`
-	Province            string `json:"province"`
-	ProvinceDescription string `json:"province_description"`
+	Province            string `json:"province,omitempty"`             //only populated on Canadian API calls
+	ProvinceDescription string `json:"province_description,omitempty"` //only populated on Canadian API calls
+	State               string `json:"state,omitempty"`                //only populated on US API calls
+	StateDescription    string `json:"state_description,omitempty"`    //only populated on US API calls
 	PerMinuteMonthly    string `json:"perminute_monthly"`
 	PerMinuteMinute     string `json:"perminute_minute"`
 	PerMinuteSetup      string `json:"perminute_setup"`
@@ -647,16 +798,50 @@ func (d *DIDsAPI) GetDIDsInternationalTollFree(countryId string) ([]Internationa
 	return rs.Locations, nil
 }
 
-func (d *DIDsAPI) GetDIDsUSA() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetDIDsUSA(state, rateCenter string) ([]DID, error) {
+	values := url.Values{}
+	values.Add("state", state)
+
+	if rateCenter != "" {
+		values.Add("ratecenter", rateCenter)
+	}
+
+	rs := &GetDIDsUSAResp{}
+	if err := d.client.Get("getDIDsUSA", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.DIDs, nil
 }
 
-func (d *DIDsAPI) GetDISAs() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetDISAs(DISA string) ([]DISA, error) {
+	values := url.Values{}
+
+	if DISA != "" {
+		values.Add("disa", DISA)
+	}
+
+	rs := &GetDISAsResp{}
+	if err := d.client.Get("getDISAs", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.DISAs, nil
 }
 
-func (d *DIDsAPI) GetForwardings() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetForwardings(forwarding string) ([]Forwarding, error) {
+	values := url.Values{}
+
+	if forwarding != "" {
+		values.Add("forwarding", forwarding)
+	}
+
+	rs := &GetForwardingsResp{}
+	if err := d.client.Get("getForwardings", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Forwardings, nil
 }
 
 func (d *DIDsAPI) GetInternationalTypes(typ3 string) ([]InternationalTypes, error) {
@@ -674,24 +859,78 @@ func (d *DIDsAPI) GetInternationalTypes(typ3 string) ([]InternationalTypes, erro
 	return rs.Types, nil
 }
 
-func (d *DIDsAPI) GetIVRs() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetIVRs(IVR string) ([]IVR, error) {
+	values := url.Values{}
+
+	if IVR != "" {
+		values.Add("ivr", IVR)
+	}
+
+	rs := &GetIVRsResp{}
+	if err := d.client.Get("getIVRs", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.IVRs, nil
 }
 
-func (d *DIDsAPI) GetJoinWhenEmptyTypes() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetJoinWhenEmptyTypes(typ3 string) ([]JoinWhenEmptyType, error) {
+	values := url.Values{}
+
+	if typ3 != "" {
+		values.Add("type", typ3)
+	}
+
+	rs := &GetJoinWhenEmptyTypesResp{}
+	if err := d.client.Get("getJoinWhenEmptyTypes", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.JoinWhenEmptyTypes, nil
 }
 
-func (d *DIDsAPI) GetPhonebook() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetPhonebook(phonebook, name string) ([]Phonebook, error) {
+	values := url.Values{}
+
+	if phonebook != "" {
+		values.Add("phonebook", phonebook)
+	}
+
+	if name != "" {
+		values.Add("name", name)
+	}
+
+	rs := &GetPhonebookResp{}
+	if err := d.client.Get("getPhonebook", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Phonebooks, nil
 }
 
-func (d *DIDsAPI) GetPortability() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetPortability(DID string) (bool, []Plan, error) {
+	values := url.Values{}
+	values.Add("did", DID)
+
+	rs := &GetPortabilityResp{}
+	if err := d.client.Get("getPortability", values, rs); err != nil {
+		return false, nil, err
+	}
+
+	portable := rs.Portable == "yes"
+
+	return portable, rs.Plans, nil
 }
 
-func (d *DIDsAPI) GetProvinces() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetProvinces() ([]Province, error) {
+	values := url.Values{}
+
+	rs := &GetProvincesResp{}
+	if err := d.client.Get("getProvinces", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Provinces, nil
 }
 
 func (d *DIDsAPI) GetQueues() error {
