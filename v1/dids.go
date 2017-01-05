@@ -404,6 +404,47 @@ type RateCenter struct {
 	Available  bool `json:"available"`
 }
 
+type GetQueuesResp struct {
+	BaseResp
+	Queues []Queue `json:"queues"`
+}
+
+type Queue struct {
+	Queue                                            string `json:"queue"`
+	QueueName                                        string `json:"queue_name"`
+	QueueNumber                                      string `json:"queue_number"`
+	QueueLanguage                                    string `json:"queue_language"`
+	QueuePassword                                    string `json:"queue_password"`
+	CalleridPrefix                                   string `json:"callerid_prefix"`
+	JoinAnnouncement                                 string `json:"join_announcement"`
+	PriorityWeight                                   string `json:"priority_weight"`
+	AgentAnnouncement                                string `json:"agent_announcement"`
+	ReportHoldTimeAgent                              string `json:"report_hold_time_agent"`
+	MemberDelay                                      string `json:"member_delay"`
+	MusicOnHold                                      string `json:"music_on_hold"`
+	MaximumWaitTime                                  string `json:"maximum_wait_time"`
+	MaximumCallers                                   string `json:"maximum_callers"`
+	JoinWhenEmpty                                    string `json:"join_when_empty"`
+	LeaveWhenEmpty                                   string `json:"leave_when_empty"`
+	RingStrategy                                     string `json:"ring_strategy"`
+	RingInuse                                        string `json:"ring_inuse"`
+	AgentRingTimeout                                 string `json:"agent_ring_timeout"`
+	RetryTimer                                       string `json:"retry_timer"`
+	WrapupTime                                       string `json:"wrapup_time"`
+	VoiceAnnouncement                                string `json:"voice_announcement"`
+	FrequencyAnnouncement                            string `json:"frequency_announcement"`
+	AnnouncePositionFrequency                        string `json:"announce_position_frecuency"`
+	AnnounceRoundSeconds                             string `json:"announce_round_seconds"`
+	IfAnnouncePositionEnabledReportEstimatedHoldTime string `json:"if_announce_position_enabled_report_estimated_hold_time"`
+	ThankyouForYourPatience                          string `json:"thankyou_for_your_patience"`
+	FailOverRoutingTimeout                           BaseRoute `json:"fail_over_routing_timeout"`
+	FailOverRoutingFull                              BaseRoute `json:"fail_over_routing_full"`
+	FailOverRoutingJoinEmpty                         BaseRoute `json:"fail_over_routing_join_empty"`
+	FailOverRoutingLeaveEmpty                        BaseRoute `json:"fail_over_routing_leave_empty"`
+	FailOverRoutingJoinUnavail                       BaseRoute `json:"fail_over_routing_join_unavail"`
+	FailOverRoutingLeaveUnavail                      BaseRoute `json:"fail_over_routing_leave_unavail"`
+}
+
 func (c *RateCenter) UnmarshalJSON(data []byte) error {
 
 	type Alias RateCenter
@@ -933,8 +974,19 @@ func (d *DIDsAPI) GetProvinces() ([]Province, error) {
 	return rs.Provinces, nil
 }
 
-func (d *DIDsAPI) GetQueues() error {
-	return errors.New("NOT IMPLEMENTED YET!")
+func (d *DIDsAPI) GetQueues(queue string) ([]Queue, error) {
+	values := url.Values{}
+
+	if queue != "" {
+		values.Add("queue", queue)
+	}
+
+	rs := &GetQueuesResp{}
+	if err := d.client.Get("getQueues", values, rs); err != nil {
+		return nil, err
+	}
+
+	return rs.Queues, nil
 }
 
 func (d *DIDsAPI) GetRateCentersCan(province string) ([]RateCenter, error) {
@@ -1077,6 +1129,26 @@ func (d *DIDsAPI) OrderDIDInternationalGeographic(didOrder *DIDOrderInternationa
 	return nil
 }
 
+func (d *DIDsAPI) OrderDIDInternationalNational() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) OrderDIDInternationalTollFree() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) OrderDIDVirtual() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) OrderTollFree() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) OrderVanity() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
 func (d *DIDsAPI) SearchDIDsCan(province string, typ3 DIDSearchType, query string) ([]DID, error) {
 	values := url.Values{}
 	values.Add("type", string(typ3))
@@ -1092,4 +1164,100 @@ func (d *DIDsAPI) SearchDIDsCan(province string, typ3 DIDSearchType, query strin
 	}
 
 	return rs.DIDs, nil
+}
+
+func (d *DIDsAPI) SearchDIDsUSA() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SearchTollFreeCanUS() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SearchTollFreeUSA() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SearchVanity() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SendSMS() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetCallback() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetCallerIDFiltering() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetDIDBillingType() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetDIDInfo() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetDIDPOP() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetDIDRouting() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetDIDVoicemail() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetDISA() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetForwarding() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetIVR() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetPhonebook() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetQueue() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetRecording() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetRingGroup() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetSIPURI() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetSMS() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetStaticMember() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) SetTimeCondition() error {
+	return errors.New("NOT IMPLEMENTED YET!")
+}
+
+func (d *DIDsAPI) UnconnectDID() error {
+	return errors.New("NOT IMPLEMENTED YET!")
 }

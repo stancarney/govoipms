@@ -181,8 +181,19 @@ func (c *VOIPClient) NewClientsAPI() *ClientsAPI {
 	return &ClientsAPI{c}
 }
 
+//Only partially implemented. See dids.go.
 func (c *VOIPClient) NewDIDsAPI() *DIDsAPI {
 	return &DIDsAPI{c}
+}
+
+//Not implemented yet.
+func (c *VOIPClient) NewFaxAPI() *FaxAPI {
+	panic("NOT IMPLEMENTED YET!")
+}
+
+//Not implemented yet.
+func (c *VOIPClient) NewVoicemailAPI() *VoicemailAPI {
+	panic("NOT IMPLEMENTED YET!")
 }
 
 func (c *VOIPClient) WriteStruct(writer *multipart.Writer, iface interface{}) error {
